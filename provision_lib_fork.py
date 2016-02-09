@@ -126,12 +126,18 @@ class AdminRequests(object):
         if not exists:
             print "No admin with ID %s; skipping." % admin_id
             return None
+        elif not admin_id.isdigit():
+            admin_id = exists["id"]
         if not isinstance(to_update, dict):
             # TODO (Alex): Error here
             pass
         elif not set(to_update.keys()).issubset(valid_updates):
             # TODO (Alex): Error here
             pass
+        if to_update.has_key("tag"):
+            self._provided_tags_valid(to_update["tag"])
+        if to_update.has_key("orgAccess"):
+            self._provided_access_valid()
 
 
     def del_admin(self, admin_id, skip_confirm=True):
