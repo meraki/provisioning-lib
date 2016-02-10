@@ -2,10 +2,10 @@ import requests
 
 # Hard-Coding my URL and API key for now is a stopgap
 
-ORG_ID = "349652"
+
 BASE_URL = "https://n123.meraki.com/api/v0"
 API_KEY = "X-Cisco-Meraki-API-Key"
-API_VAL = "07668885586832243df6aefbea2a7fc1afb5cc8e"
+
 JSON_KEY = "Content-Type"
 JSON_VAL = "application/json"
 HEADERS = {API_KEY: API_VAL, JSON_KEY: JSON_VAL}
