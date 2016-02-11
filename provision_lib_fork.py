@@ -2,10 +2,10 @@ import requests
 
 # Hard-Coding my URL and API key for now is a stopgap
 
-
+ORG_ID = "349652"
 BASE_URL = "https://n123.meraki.com/api/v0"
 API_KEY = "X-Cisco-Meraki-API-Key"
-
+API_VAL = "9e8894d87ac3c3e84aa2ab956c70ca478756a6ca"
 JSON_KEY = "Content-Type"
 JSON_VAL = "application/json"
 HEADERS = {API_KEY: API_VAL, JSON_KEY: JSON_VAL}
@@ -46,26 +46,37 @@ class AdminRequests(object):
     def __init__(self):
         self.url = "%s/organizations/%s/admins" % (BASE_URL, ORG_ID)
         self.valid_access_keys = set(["tag", "access"])
-        self.valid_access_vals = set(["full", "read-only", "none"])
+        self.valid_org_access_vals = set(["full", "read-only", "none"])
+        self.valid_net_access_vals = set.union(self.valid_org_access_vals,
+                                               set(["monitor-only",
+                                                    "guest-ambassador"]))
 
     def _provided_access_valid(self, access):
-        if access not in self.valid_access_vals:
+        if access not in self.valid_org_access_vals:
             # TODO (Alex): Raise proper exception
             print "Invalid access type specified!"
 
     def _provided_tags_valid(self, tags):
         if not isinstance(tags, list):
-            # TODO (Alex): raise exception properly here
-            print "tags must be provided in a list!"
+            raise TypeError
 
         for i in tags:
             if (not isinstance(i, dict)
                     or not self.valid_access_keys.issuperset(i.keys())
-                    or not i["access"] in self.valid_access_vals):
-                # TODO (Alex): raise exception properly here too
-                # conditionals may have to be split out for
+                    or not i["access"] in self.valid_net_access_vals):
+                # TODO (Alex): conditionals have to be split out for
                 # more verbose handling
-                print "Incorrect format specified for tags!"
+                raise TypeError
+
+    def _provided_networks_valid(self, networks):
+        if not isinstance(networks, list):
+            # TODO (Alex): raise TypeError
+            pass
+        for i in networks:
+            if not isinstance(i, dict):
+                raise TypeError
+
+
 
     def _admin_exists(self, admin_id):
         check = get_data(ext_url=self.url)
@@ -76,7 +87,7 @@ class AdminRequests(object):
         return None
 
 
-    def add_admin(self, name, email, access, tags=None):
+    def add_admin(self, name, email, access, networks=None, tags=None):
         """ Define a new org-level Admin account on Dashboard under
             Organization -> Administrators
             Args:
@@ -85,6 +96,9 @@ class AdminRequests(object):
                 access: Their access level; currently only supports full
                     admins, read-only admins, or tag-based admins; not
                     network-level admins.
+                networks: A list of dictionaries formatted as
+                [network:network-id, access:access-level]; networks must be
+                prexisting on Dashboard.
                 tags: A list of dictionaries formatted as
                 [{tag:tag-name}, {access:access-level}]; tags don't need to be
                 prexisting on Dashboard.
@@ -103,12 +117,15 @@ class AdminRequests(object):
         if tags:
             self._provided_tags_valid(tags)
             admin["tags"] = tags
+        if networks:
+
 
         new_admin = requests.post(self.url, json=admin, headers=HEADERS)
 
         # TODO (Alex): Right now this just returns regardless of whether
         # the request was successful or not; this will need defined handlers.
         return new_admin
+
 
     def update_admin(self, admin_id, to_update):
         """Update an existing admin's permissions or access.
@@ -128,6 +145,9 @@ class AdminRequests(object):
             return None
         elif not admin_id.isdigit():
             admin_id = exists["id"]
+
+        update_url = "%s/%s" % (self.url, admin_id)
+
         if not isinstance(to_update, dict):
             # TODO (Alex): Error here
             pass
@@ -137,7 +157,13 @@ class AdminRequests(object):
         if to_update.has_key("tag"):
             self._provided_tags_valid(to_update["tag"])
         if to_update.has_key("orgAccess"):
-            self._provided_access_valid()
+            self._provided_access_valid(to_update["orgAccess"])
+
+        updated = requests.put(url=update_url, json=to_update, headers=HEADERS)
+
+        # TODO (Alex): See TODO for add_admin
+
+        return updated
 
 
     def del_admin(self, admin_id, skip_confirm=True):
