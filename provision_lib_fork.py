@@ -118,7 +118,7 @@ class AdminRequests(object):
             self._provided_tags_valid(tags)
             admin["tags"] = tags
         if networks:
-
+            pass
 
         new_admin = requests.post(self.url, json=admin, headers=HEADERS)
 
