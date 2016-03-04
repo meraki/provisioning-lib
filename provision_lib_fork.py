@@ -2,10 +2,10 @@ import requests
 
 # Hard-Coding my URL and API key for now is a stopgap
 
-ORG_ID = "349652"
-BASE_URL = "https://n123.meraki.com/api/v0"
+ORG_ID = ""
+BASE_URL = "https://dashboard.meraki.com/api/v0"
 API_KEY = "X-Cisco-Meraki-API-Key"
-API_VAL = "9e8894d87ac3c3e84aa2ab956c70ca478756a6ca"
+API_VAL = ""
 JSON_KEY = "Content-Type"
 JSON_VAL = "application/json"
 HEADERS = {API_KEY: API_VAL, JSON_KEY: JSON_VAL}
@@ -22,7 +22,8 @@ def get_data(level="", request_string="", url_id="", ext_url=""):
                 requests such as determining Org access for a given API key do
                 not require one.
             url_id: String containing an Org or Network ID.
-            ext_url: an externally formatted URL.
+            ext_url: an externally formatted URL; supersedes all other
+                parameters if specified
 
         Returns:
             A requests.get object containing, among other things, the HTTP
@@ -39,17 +40,20 @@ def get_data(level="", request_string="", url_id="", ext_url=""):
         data = requests.get(url, headers=HEADERS)
     return data
 
+class Error(Exception):
+    pass
+
 class AdminRequests(object):
     """ All methods, exceptions, and handlers to define, modify, or remove a
         Dashboard admin account.
     """
     def __init__(self):
         self.url = "%s/organizations/%s/admins" % (BASE_URL, ORG_ID)
-        self.valid_access_keys = set(["tag", "access"])
-        self.valid_org_access_vals = set(["full", "read-only", "none"])
+        self.valid_access_keys = {"tag", "access"}
+        self.valid_org_access_vals = {"full", "read-only", "none"}
         self.valid_net_access_vals = set.union(self.valid_org_access_vals,
-                                               set(["monitor-only",
-                                                    "guest-ambassador"]))
+                                               {"monitor-only",
+                                                "guest-ambassador"})
 
     def _provided_access_valid(self, access):
         if access not in self.valid_org_access_vals:
@@ -87,15 +91,14 @@ class AdminRequests(object):
         return None
 
 
-    def add_admin(self, name, email, access, networks=None, tags=None):
+    def add_admin(self, networks=None, tags=None, **kwargs):
         """ Define a new org-level Admin account on Dashboard under
-            Organization -> Administrators
+            Organization -> Administrators.
             Args:
                 name: Name of the new admin.
                 email: Email of the new admin.
-                access: Their access level; currently only supports full
-                    admins, read-only admins, or tag-based admins; not
-                    network-level admins.
+                access: Their access level; valid values are full, read-only, or
+                none (for tag or network-level admins)
                 networks: A list of dictionaries formatted as
                 [network:network-id, access:access-level]; networks must be
                 prexisting on Dashboard.
@@ -108,19 +111,18 @@ class AdminRequests(object):
                 return code for it, or None if the user already exists
         """
 
-        exists = self._admin_exists(email)
+        exists = self._admin_exists(kwargs["email"])
         if exists:
             print "An account already exists for %s" % exists["email"]
             return None
-        self._provided_access_valid(access)
-        admin = {"name": name, "email": email, "orgAccess": access}
+        self._provided_access_valid(kwargs["orgAccess"])
         if tags:
             self._provided_tags_valid(tags)
-            admin["tags"] = tags
+            kwargs["tags"] = tags
         if networks:
             pass
 
-        new_admin = requests.post(self.url, json=admin, headers=HEADERS)
+        new_admin = requests.post(self.url, json=kwargs, headers=HEADERS)
 
         # TODO (Alex): Right now this just returns regardless of whether
         # the request was successful or not; this will need defined handlers.
@@ -138,7 +140,7 @@ class AdminRequests(object):
             passed admin ID doesn't exist.
         """
 
-        valid_updates = set(["orgAccess", "name", "tag", "networks"])
+        valid_updates = {"orgAccess", "name", "tag", "networks"}
         exists = self._admin_exists(admin_id)
         if not exists:
             print "No admin with ID %s; skipping." % admin_id
