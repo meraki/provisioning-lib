@@ -2,10 +2,8 @@ import requests
 
 # Hard-Coding my URL and API key for now is a stopgap
 
-ORG_ID = ""
 BASE_URL = "https://dashboard.meraki.com/api/v0"
 API_KEY = "X-Cisco-Meraki-API-Key"
-API_VAL = ""
 JSON_KEY = "Content-Type"
 JSON_VAL = "application/json"
 HEADERS = {API_KEY: API_VAL, JSON_KEY: JSON_VAL}
