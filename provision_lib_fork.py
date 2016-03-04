@@ -30,11 +30,11 @@ def get_data(level="", request_string="", url_id="", ext_url=""):
 # request strings indicate, and will need to work on adding exceptions.
 
     if ext_url:
-        data = requests.get(ext_url, headers=HEADERS)
+        data = requests.get(ext_url, headers=None)
     else:
         url = "%s/%s/%s/%s/" % (BASE_URL.strip("/"), level.strip("/"),
                                 url_id.strip("/"), request_string.strip("/"))
-        data = requests.get(url, headers=HEADERS)
+        data = requests.get(url, headers=None)
     return data
 
 class Error(Exception):
@@ -45,7 +45,7 @@ class AdminRequests(object):
         Dashboard admin account.
     """
     def __init__(self):
-        self.url = "%s/organizations/%s/admins" % (BASE_URL, ORG_ID)
+        self.url = "%s/organizations/%s/admins" % (BASE_URL, None)
         self.valid_access_keys = {"tag", "access"}
         self.valid_org_access_vals = {"full", "read-only", "none"}
         self.valid_net_access_vals = set.union(self.valid_org_access_vals,
@@ -119,7 +119,7 @@ class AdminRequests(object):
         if networks:
             pass
 
-        new_admin = requests.post(self.url, json=kwargs, headers=HEADERS)
+        new_admin = requests.post(self.url, json=kwargs, headers=None)
 
         # TODO (Alex): Right now this just returns regardless of whether
         # the request was successful or not; this will need defined handlers.
@@ -158,7 +158,7 @@ class AdminRequests(object):
         if to_update.has_key("orgAccess"):
             self._provided_access_valid(to_update["orgAccess"])
 
-        updated = requests.put(url=update_url, json=to_update, headers=HEADERS)
+        updated = requests.put(url=update_url, json=to_update, headers=None)
 
         # TODO (Alex): See TODO for add_admin
 
@@ -186,13 +186,13 @@ class AdminRequests(object):
         elif not skip_confirm:
             prompt = ("Confirm deletion of user %s (%s) from organization %s "
                       "(y/n): ") % (to_delete["name"], to_delete["email"],
-                                    ORG_ID)
+                                    None)
             confirm = raw_input(prompt)
             if confirm.lower() == "n" or confirm.lower() == "no":
                 print "Cancelling delete request\n"
                 return None
 
-        deleted = requests.delete(url, headers=HEADERS)
+        deleted = requests.delete(url, headers=None)
         return deleted
 
 
