@@ -6,7 +6,6 @@ BASE_URL = "https://dashboard.meraki.com/api/v0"
 API_KEY = "X-Cisco-Meraki-API-Key"
 JSON_KEY = "Content-Type"
 JSON_VAL = "application/json"
-HEADERS = {API_KEY: API_VAL, JSON_KEY: JSON_VAL}
 
 
 def get_data(level="", request_string="", url_id="", ext_url=""):
