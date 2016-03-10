@@ -3,7 +3,7 @@ import requests
 # Hard-Coding my URL and API key for now is a stopgap
 
 BASE_URL = "https://dashboard.meraki.com/api/v0"
-API_KEY = "X-Cisco-Meraki-API-Key"
+API_HEADER = "X-Cisco-Meraki-API-Key"
 JSON_KEY = "Content-Type"
 JSON_VAL = "application/json"
 
@@ -44,13 +44,18 @@ class AdminRequests(object):
     """ All methods, exceptions, and handlers to define, modify, or remove a
         Dashboard admin account.
     """
-    def __init__(self):
-        self.url = "%s/organizations/%s/admins" % (BASE_URL, None)
+    def __init__(self, org_id, api_key):
+        self.url = "%s/organizations/%s/admins" % (BASE_URL, org_id)
         self.valid_access_keys = {"tag", "access"}
         self.valid_org_access_vals = {"full", "read-only", "none"}
         self.valid_net_access_vals = set.union(self.valid_org_access_vals,
                                                {"monitor-only",
                                                 "guest-ambassador"})
+        # The next two lines an EXTREMELY rough stopgap for providing
+        # an OrgID and user API key to these functions, and will not last
+
+        self.headers = {API_HEADER: api_key}
+
 
     def _provided_access_valid(self, access):
         if access not in self.valid_org_access_vals:
@@ -71,7 +76,7 @@ class AdminRequests(object):
 
     def _provided_networks_valid(self, networks):
         if not isinstance(networks, list):
-            # TODO (Alex): raise TypeError
+            # TODO (Alex): raise something more descriptive
             pass
         for i in networks:
             if not isinstance(i, dict):
@@ -117,9 +122,9 @@ class AdminRequests(object):
             self._provided_tags_valid(tags)
             kwargs["tags"] = tags
         if networks:
-            pass
+            pass # still deciding how this is going to get structured
 
-        new_admin = requests.post(self.url, json=kwargs, headers=None)
+        new_admin = requests.post(self.url, json=kwargs, headers=self.headers)
 
         # TODO (Alex): Right now this just returns regardless of whether
         # the request was successful or not; this will need defined handlers.
@@ -158,7 +163,8 @@ class AdminRequests(object):
         if to_update.has_key("orgAccess"):
             self._provided_access_valid(to_update["orgAccess"])
 
-        updated = requests.put(url=update_url, json=to_update, headers=None)
+        updated = requests.put(url=update_url, json=to_update,
+                               headers=self.headers)
 
         # TODO (Alex): See TODO for add_admin
 
@@ -192,7 +198,7 @@ class AdminRequests(object):
                 print "Cancelling delete request\n"
                 return None
 
-        deleted = requests.delete(url, headers=None)
+        deleted = requests.delete(url, headers=self.headers)
         return deleted
 
 
