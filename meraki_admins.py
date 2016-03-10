@@ -93,7 +93,7 @@ class AdminRequests(object):
         return None
 
 
-    def add_admin(self, networks=None, tags=None, **kwargs):
+    def add_admin(self, **kwargs):
         """ Define a new org-level Admin account on Dashboard under
             Organization -> Administrators.
             Args:
@@ -113,15 +113,10 @@ class AdminRequests(object):
                 return code for it, or None if the user already exists
         """
 
-        exists = self._admin_exists(kwargs["email"])
-        if exists:
-            print "An account already exists for %s" % exists["email"]
-            return None
         self._provided_access_valid(kwargs["orgAccess"])
-        if tags:
-            self._provided_tags_valid(tags)
-            kwargs["tags"] = tags
-        if networks:
+        if "tags" in kwargs.keys():
+            self._provided_tags_valid(kwargs["tags"])
+        if "networks" in kwargs.keys():
             pass # still deciding how this is going to get structured
 
         return requests.post(self.url, json=kwargs, headers=self.headers)
