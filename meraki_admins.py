@@ -36,10 +36,21 @@ def get_data(level="", request_string="", url_id="", ext_url=""):
     return data
 
 class Error(Exception):
+    """Base module exception."""
+    pass
+
+class InvalidAccess(Error):
+    """Thrown when improper permissions are supplied."""
+    def __init__(self, provided, valid):
+        self.provided = provided
+        self.valid = valid
+
+class FormatError(Error):
+    """Thrown when imprperly formatted data received."""
     pass
 
 class AdminRequests(object):
-    """ All methods, exceptions, and handlers to define, modify, or remove a
+    """ All methods and handlers to define, modify, or remove a
         Dashboard admin account.
     """
     def __init__(self, org_id, api_key):
@@ -49,37 +60,28 @@ class AdminRequests(object):
         self.valid_net_access_vals = set.union(self.valid_org_access_vals,
                                                {"monitor-only",
                                                 "guest-ambassador"})
-        # The next two lines an EXTREMELY rough stopgap for providing
-        # an OrgID and user API key to these functions, and will not last
 
         self.headers = {API_HEADER: api_key}
 
 
     def _provided_access_valid(self, access):
         if access not in self.valid_org_access_vals:
-            # TODO (Alex): Raise proper exception
-            print "Invalid access type specified!"
+            # TODO (Alex): Raise more descriptive exception
+            raise InvalidAccess(access, self.valid_org_access_vals)
+
 
     def _provided_tags_valid(self, tags):
         if not isinstance(tags, list):
-            raise TypeError
+            raise TypeError("Tags must be provided as a list of dictionaries.")
 
         for i in tags:
-            if (not isinstance(i, dict)
-                    or not self.valid_access_keys.issuperset(i.keys())
-                    or not i["access"] in self.valid_net_access_vals):
-                # TODO (Alex): conditionals have to be split out for
-                # more verbose handling
-                raise TypeError
-
-    def _provided_networks_valid(self, networks):
-        if not isinstance(networks, list):
-            # TODO (Alex): raise something more descriptive
-            pass
-        for i in networks:
             if not isinstance(i, dict):
-                raise TypeError
-
+                raise TypeError("""Tags must be provided as
+                                a list of dictionaries.""")
+            elif not self.valid_access_keys.issuperset(i.keys()):
+                raise FormatError("Error in tag format.")
+            elif not i["access"] in self.valid_net_access_vals:
+                raise InvalidAccess(i["access"], self.valid_net_access_vals)
 
 
     def _admin_exists(self, admin_id):
@@ -88,6 +90,7 @@ class AdminRequests(object):
             if admin["email"] == admin_id or admin["id"] == admin_id:
                 return admin
 
+        print "No admin %s found" % admin_id
         return None
 
 
@@ -122,11 +125,7 @@ class AdminRequests(object):
         if networks:
             pass # still deciding how this is going to get structured
 
-        new_admin = requests.post(self.url, json=kwargs, headers=self.headers)
-
-        # TODO (Alex): Right now this just returns regardless of whether
-        # the request was successful or not; this will need defined handlers.
-        return new_admin
+        return requests.post(self.url, json=kwargs, headers=self.headers)
 
 
     def update_admin(self, admin_id, to_update):
@@ -143,60 +142,44 @@ class AdminRequests(object):
         valid_updates = {"orgAccess", "name", "tag", "networks"}
         exists = self._admin_exists(admin_id)
         if not exists:
-            print "No admin with ID %s; skipping." % admin_id
             return None
         elif not admin_id.isdigit():
             admin_id = exists["id"]
 
-        update_url = "%s/%s" % (self.url, admin_id)
+        update_url = self.url+admin_id
 
         if not isinstance(to_update, dict):
             # TODO (Alex): Error here
             pass
         elif not set(to_update.keys()).issubset(valid_updates):
-            # TODO (Alex): Error here
+
             pass
         if to_update.has_key("tag"):
             self._provided_tags_valid(to_update["tag"])
         if to_update.has_key("orgAccess"):
             self._provided_access_valid(to_update["orgAccess"])
 
-        updated = requests.put(url=update_url, json=to_update,
-                               headers=self.headers)
-
-        # TODO (Alex): See TODO for add_admin
-
-        return updated
+        return requests.put(url=update_url, json=to_update,
+                            headers=self.headers)
 
 
-    def del_admin(self, admin_id, skip_confirm=True):
+    def del_admin(self, admin_id):
         """ Delete a specified admin account.
             Args:
-                admin_id: ID string of the admin to be deleted.
-                no_confirm: Bool to prompt for confirmation before request is
-                    submitted.
+                admin_id: ID string or email of the admin to be deleted.
             Returns:
                 deleted: The request object of the deleted admin, or None if the
                 passed admin ID doesn't exist.
         """
 
-        url = "%s/%s" % (self.url, admin_id)
-        to_delete = self._admin_exists(admin_id)
-
-        if not to_delete:
-            print "No admin with ID %s; skipping." % admin_id
+        exists = self._admin_exists(admin_id)
+        if not exists:
             return None
+        elif not admin_id.isdigit():
+            admin_id = exists["id"]
 
-        elif not skip_confirm:
-            prompt = ("Confirm deletion of user %s (%s) from organization %s "
-                      "(y/n): ") % (to_delete["name"], to_delete["email"],
-                                    None)
-            confirm = raw_input(prompt)
-            if confirm.lower() == "n" or confirm.lower() == "no":
-                print "Cancelling delete request\n"
-                return None
+        url = self.url+admin_id
 
-        deleted = requests.delete(url, headers=self.headers)
-        return deleted
+        return requests.delete(url, headers=self.headers)
 
 
