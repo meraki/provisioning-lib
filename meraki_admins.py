@@ -66,7 +66,6 @@ class AdminRequests(object):
 
     def _provided_access_valid(self, access):
         if access not in self.valid_org_access_vals:
-            # TODO (Alex): Raise more descriptive exception
             raise InvalidAccess(access, self.valid_org_access_vals)
 
 
@@ -149,11 +148,10 @@ class AdminRequests(object):
         update_url = self.url+admin_id
 
         if not isinstance(to_update, dict):
-            # TODO (Alex): Error here
-            pass
-        elif not set(to_update.keys()).issubset(valid_updates):
+            raise FormatError("Updated parameters must be a dict.")
 
-            pass
+        elif not set(to_update.keys()).issubset(valid_updates):
+            raise FormatError("Invalid user parameter specified.")
         if to_update.has_key("tag"):
             self._provided_tags_valid(to_update["tag"])
         if to_update.has_key("orgAccess"):
