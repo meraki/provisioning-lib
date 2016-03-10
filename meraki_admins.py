@@ -6,7 +6,7 @@ JSON_KEY = "Content-Type"
 JSON_VAL = "application/json"
 
 
-def get_data(level="", request_string="", url_id="", ext_url=""):
+def get_data(headers, level="", request_string="", url_id="", ext_url=""):
     """ Defines a base get request to the Meraki Dashboard.
         One can be built using this function, or a pre-formatted one can be
         passed in.
@@ -28,11 +28,11 @@ def get_data(level="", request_string="", url_id="", ext_url=""):
 # request strings indicate, and will need to work on adding exceptions.
 
     if ext_url:
-        data = requests.get(ext_url, headers=None)
+        data = requests.get(ext_url, headers=headers)
     else:
         url = "%s/%s/%s/%s/" % (BASE_URL.strip("/"), level.strip("/"),
                                 url_id.strip("/"), request_string.strip("/"))
-        data = requests.get(url, headers=None)
+        data = requests.get(url, headers=headers)
     return data
 
 class Error(Exception):
@@ -84,10 +84,13 @@ class AdminRequests(object):
 
 
     def _admin_exists(self, admin_id):
-        check = get_data(ext_url=self.url)
-        for admin in check.json():
-            if admin["email"] == admin_id or admin["id"] == admin_id:
-                return admin
+        check = get_data(ext_url=self.url, headers=self.headers)
+        try:
+            for admin in check.json():
+                if admin["email"] == admin_id or admin["id"] == admin_id:
+                    return admin
+        except ValueError:
+            pass
 
         print "No admin %s found" % admin_id
         return None
