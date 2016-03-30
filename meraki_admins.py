@@ -39,11 +39,15 @@ class Error(Exception):
     """Base module exception."""
     pass
 
-class InvalidAccess(Error):
+class InvalidOrgPermissions(Error):
     """Thrown when improper permissions are supplied."""
     def __init__(self, provided=None, valid=None):
         self.provided = provided
         self.valid = valid
+        self.default = "Org Permissions must be FULL, READ-ONLY, or NONE"
+
+    def __str__(self):
+        return repr(self.default)
 
 class FormatError(Error):
     """Thrown when imprperly formatted data received."""
@@ -66,7 +70,7 @@ class AdminRequests(object):
 
     def __provided_access_valid(self, access):
         if access not in self.valid_org_access_vals:
-            raise InvalidAccess(access, self.valid_org_access_vals)
+            raise InvalidOrgPermissions(access, self.valid_org_access_vals)
 
 
     def __provided_tags_valid(self, tags):
@@ -80,7 +84,7 @@ class AdminRequests(object):
             elif not self.valid_access_keys.issuperset(i.keys()):
                 raise FormatError("Error in tag format.")
             elif not i["access"] in self.valid_net_access_vals:
-                raise InvalidAccess(i["access"], self.valid_net_access_vals)
+                raise InvalidOrgPermissions(i["access"], self.valid_net_access_vals)
 
 
     def __admin_exists(self, admin_id):
@@ -92,17 +96,17 @@ class AdminRequests(object):
         except ValueError:
             pass
 
-        print "No admin %s found" % admin_id
+        # print "No admin %s found" % admin_id
         return None
 
 
-    def add_admin(self, name, email, orgAccess, networks=None, tags=None):
+    def add_admin(self, name, email, org_access, networks=None, tags=None):
         """ Define a new org-level Admin account on Dashboard under
             Organization -> Administrators.
             Args:
                 name: Name of the new admin.
                 email: Email of the new admin.
-                orgAccess: Their access level; valid values are full, read-only,
+                org_access: Their access level; valid values are full, read-only,
                 or none (for tag or network-level admins)
                 networks: A list of dictionaries formatted as
                 [network:network-id, access:access-level]; networks must be
@@ -116,9 +120,9 @@ class AdminRequests(object):
                 return code for it, or None if the user already exists
         """
 
-        admin = {"name": name, "email": email, "orgAccess": orgAccess}
-        self.__provided_access_valid(orgAccess)
-        if orgAccess.lower() == "none" and not tags and not networks:
+        admin = {"name": name, "email": email, "orgAccess": org_access}
+        self.__provided_access_valid(org_access)
+        if org_access.lower() == "none" and not tags and not networks:
             pass
 
         if tags:
@@ -133,11 +137,15 @@ class AdminRequests(object):
 
 
     def update_admin(self, admin_id,
-        orgAccess=None,
-        name=None,
-        tags=None,
-        networks=None):
+                     org_access=None,
+                     name=None,
+                     tags=None,
+                     networks=None):
         """Update an existing admin's permissions or access.
+
+        Dashboard ignores null or None values in spite of what it returns, and
+        will not modify anything based on null parameters.
+
         Args:
             admin_id: A user ID string or email address.
             to_update: a dict of the fields to be updated; valid keys are
@@ -153,17 +161,17 @@ class AdminRequests(object):
         elif not admin_id.isdigit():
             admin_id = exists["id"]
 
-        to_update = {"id": admin_id, "orgAccess": orgAccess, "name": name}
+        to_update = {"id": admin_id, "orgAccess": org_access, "name": name}
         update_url = self.url+admin_id
 
         if tags:
             self.__provided_tags_valid(tags)
             to_update["tags"] = tags
 
-        if orgAccess:
+        if org_access:
             try:
-                self.__provided_access_valid(orgAccess)
-            except InvalidAccess as err:
+                self.__provided_access_valid(org_access)
+            except InvalidOrgPermissions as err:
                 print "ERROR: Invalid permissions for user %s \nPROVIDED: %s \
                 \nEXPECTED: %s" % (admin_id, err.provided, err.valid)
 
