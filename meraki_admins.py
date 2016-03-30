@@ -41,7 +41,7 @@ class Error(Exception):
 
 class InvalidAccess(Error):
     """Thrown when improper permissions are supplied."""
-    def __init__(self, provided, valid):
+    def __init__(self, provided=None, valid=None):
         self.provided = provided
         self.valid = valid
 
@@ -64,26 +64,26 @@ class AdminRequests(object):
         self.headers = {API_HEADER: api_key}
 
 
-    def _provided_access_valid(self, access):
+    def __provided_access_valid(self, access):
         if access not in self.valid_org_access_vals:
             raise InvalidAccess(access, self.valid_org_access_vals)
 
 
-    def _provided_tags_valid(self, tags):
+    def __provided_tags_valid(self, tags):
         if not isinstance(tags, list):
             raise TypeError("Tags must be provided as a list of dictionaries.")
 
         for i in tags:
             if not isinstance(i, dict):
-                raise TypeError("""Tags must be provided as
-                                a list of dictionaries.""")
+                raise TypeError("Tags must be provided as \
+                                a list of dictionaries.")
             elif not self.valid_access_keys.issuperset(i.keys()):
                 raise FormatError("Error in tag format.")
             elif not i["access"] in self.valid_net_access_vals:
                 raise InvalidAccess(i["access"], self.valid_net_access_vals)
 
 
-    def _admin_exists(self, admin_id):
+    def __admin_exists(self, admin_id):
         check = get_data(ext_url=self.url, headers=self.headers)
         try:
             for admin in check.json():
@@ -96,14 +96,14 @@ class AdminRequests(object):
         return None
 
 
-    def add_admin(self, **kwargs):
+    def add_admin(self, name, email, orgAccess, networks=None, tags=None):
         """ Define a new org-level Admin account on Dashboard under
             Organization -> Administrators.
             Args:
                 name: Name of the new admin.
                 email: Email of the new admin.
-                access: Their access level; valid values are full, read-only, or
-                none (for tag or network-level admins)
+                orgAccess: Their access level; valid values are full, read-only,
+                or none (for tag or network-level admins)
                 networks: A list of dictionaries formatted as
                 [network:network-id, access:access-level]; networks must be
                 prexisting on Dashboard.
@@ -116,16 +116,27 @@ class AdminRequests(object):
                 return code for it, or None if the user already exists
         """
 
-        self._provided_access_valid(kwargs["orgAccess"])
-        if "tags" in kwargs.keys():
-            self._provided_tags_valid(kwargs["tags"])
-        if "networks" in kwargs.keys():
+        admin = {"name": name, "email": email, "orgAccess": orgAccess}
+        self.__provided_access_valid(orgAccess)
+        if orgAccess.lower() == "none" and not tags and not networks:
+            pass
+
+        if tags:
+            self.__provided_tags_valid(tags)
+            admin["tags"] = tags
+        if networks:
             pass # still deciding how this is going to get structured
 
-        return requests.post(self.url, json=kwargs, headers=self.headers)
+        new_admin = requests.post(self.url, json=admin, headers=self.headers)
+
+        return new_admin
 
 
-    def update_admin(self, admin_id, to_update):
+    def update_admin(self, admin_id,
+        orgAccess=None,
+        name=None,
+        tags=None,
+        networks=None):
         """Update an existing admin's permissions or access.
         Args:
             admin_id: A user ID string or email address.
@@ -136,27 +147,30 @@ class AdminRequests(object):
             passed admin ID doesn't exist.
         """
 
-        valid_updates = {"orgAccess", "name", "tag", "networks"}
-        exists = self._admin_exists(admin_id)
+        exists = self.__admin_exists(admin_id)
         if not exists:
             return None
         elif not admin_id.isdigit():
             admin_id = exists["id"]
 
+        to_update = {"id": admin_id, "orgAccess": orgAccess, "name": name}
         update_url = self.url+admin_id
 
-        if not isinstance(to_update, dict):
-            raise FormatError("Updated parameters must be a dict.")
+        if tags:
+            self.__provided_tags_valid(tags)
+            to_update["tags"] = tags
 
-        elif not set(to_update.keys()).issubset(valid_updates):
-            raise FormatError("Invalid user parameter specified.")
-        if to_update.has_key("tag"):
-            self._provided_tags_valid(to_update["tag"])
-        if to_update.has_key("orgAccess"):
-            self._provided_access_valid(to_update["orgAccess"])
+        if orgAccess:
+            try:
+                self.__provided_access_valid(orgAccess)
+            except InvalidAccess as err:
+                print "ERROR: Invalid permissions for user %s \nPROVIDED: %s \
+                \nEXPECTED: %s" % (admin_id, err.provided, err.valid)
 
-        return requests.put(url=update_url, json=to_update,
-                            headers=self.headers)
+
+        updated = requests.put(url=update_url, json=to_update,
+                               headers=self.headers)
+        return updated
 
 
     def del_admin(self, admin_id):
@@ -168,7 +182,7 @@ class AdminRequests(object):
                 passed admin ID doesn't exist.
         """
 
-        exists = self._admin_exists(admin_id)
+        exists = self.__admin_exists(admin_id)
         if not exists:
             return None
         elif not admin_id.isdigit():
