@@ -1,7 +1,8 @@
 import pytest
 import meraki_admins
 
-test_connector = meraki_admins.DashboardAdmins()
+with open('key', 'r') as key:
+	test_connector = meraki_admins.DashboardAdmins("524681", key.read().strip())
 
 
 def test_add_valid():
