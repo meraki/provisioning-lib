@@ -1,8 +1,7 @@
 import pytest
 import meraki_admins
 
-test_connector = meraki_admins.DashboardAdmins("524681",
-											   "63f99f730ce39ebd58ed282dc38cbc451cbcd0ea")
+test_connector = meraki_admins.DashboardAdmins()
 
 
 def test_add_valid():
@@ -20,4 +19,4 @@ def test_add_valid():
 				unhashables[key] = user_data[key]
 				user_data.pop(key)
 
-		assert set(user.items()).issubset(set(user_data.items())) is False
+		assert set(user.items()).issubset(set(user_data.items())) is True
