@@ -8,11 +8,11 @@ with open('key', 'r') as api_key:
 
 def test_add_valid():
     valid_users = [
-        {"name": "test 1", "email": "test1@test.lol",
-         "orgAccess": "read-only"}]
+        {"name": "test 1", "email": "test1@test.lol", "orgAccess": "read-only"},
+        {"name": "test 2", "email": "test2@test.lol", "orgAccess": "none",
+         "tags": [{"tag": "test tag", "access": "read-only"}]}]
     for user in valid_users:
-        test_request = TEST_CONNECTOR.add_admin(user["name"], user["email"],
-                                                user["orgAccess"])
+        test_request = TEST_CONNECTOR.add_admin(**user)
         user_data = test_request.json()
         unhashables = {}
 

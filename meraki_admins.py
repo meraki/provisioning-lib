@@ -53,24 +53,23 @@ class FormatError(Error):
     """Thrown when imprperly formatted data received."""
     pass
 
-class AdminRequests(object):
-    """ All methods and handlers to define, modify, or remove a
-        Dashboard admin account.
+class DashboardAdmins(object):
+    """ All methods and handlers to define, modify, or remove an
+        admin from a given Dashboard account.
     """
     def __init__(self, org_id, api_key):
         self.url = "%s/organizations/%s/admins" % (BASE_URL, org_id)
-        self.valid_access_keys = {"tag", "access"}
-        self.valid_org_access_vals = {"full", "read-only", "none"}
-        self.valid_net_access_vals = set.union(self.valid_org_access_vals,
-                                               {"monitor-only",
-                                                "guest-ambassador"})
+        self.valid_tag_keys = {"tag", "access"}
+        self.valid_access_vals = {"full", "read-only", "none"}
+        self.valid_target_vals = self.valid_access_vals.union({"monitor-only",
+                                                               "guest-ambassador"})
 
         self.headers = {API_HEADER: api_key}
 
 
     def __provided_access_valid(self, access):
-        if access not in self.valid_org_access_vals:
-            raise InvalidOrgPermissions(access, self.valid_org_access_vals)
+        if access not in self.valid_access_vals:
+            raise InvalidOrgPermissions(access, self.valid_access_vals)
 
 
     def __provided_tags_valid(self, tags):
@@ -81,10 +80,11 @@ class AdminRequests(object):
             if not isinstance(i, dict):
                 raise TypeError("Tags must be provided as \
                                 a list of dictionaries.")
-            elif not self.valid_access_keys.issuperset(i.keys()):
+            elif not self.valid_tag_keys.issuperset(i.keys()):
                 raise FormatError("Error in tag format.")
-            elif not i["access"] in self.valid_net_access_vals:
-                raise InvalidOrgPermissions(i["access"], self.valid_net_access_vals)
+            elif not i["access"] in self.valid_target_vals:
+                raise InvalidOrgPermissions(i["access"],
+                                            self.valid_target_vals)
 
 
     def __admin_exists(self, admin_id):
@@ -100,14 +100,14 @@ class AdminRequests(object):
         return None
 
 
-    def add_admin(self, name, email, org_access, networks=None, tags=None):
+    def add_admin(self, name, email, orgAccess, networks=None, tags=None):
         """ Define a new org-level Admin account on Dashboard under
             Organization -> Administrators.
             Args:
                 name: Name of the new admin.
                 email: Email of the new admin.
-                org_access: Their access level; valid values are full, read-only,
-                or none (for tag or network-level admins)
+                orgAccess: Their access level; valid values are full,
+                read-only, or none (for tag or network-level admins)
                 networks: A list of dictionaries formatted as
                 [network:network-id, access:access-level]; networks must be
                 prexisting on Dashboard.
@@ -120,9 +120,9 @@ class AdminRequests(object):
                 return code for it, or None if the user already exists
         """
 
-        admin = {"name": name, "email": email, "orgAccess": org_access}
-        self.__provided_access_valid(org_access)
-        if org_access.lower() == "none" and not tags and not networks:
+        admin = {"name": name, "email": email, "orgAccess": orgAccess}
+        self.__provided_access_valid(orgAccess)
+        if orgAccess.lower() == "none" and not tags and not networks:
             pass
 
         if tags:
@@ -137,7 +137,7 @@ class AdminRequests(object):
 
 
     def update_admin(self, admin_id,
-                     org_access=None,
+                     orgAccess=None,
                      name=None,
                      tags=None,
                      networks=None):
@@ -161,16 +161,16 @@ class AdminRequests(object):
         elif not admin_id.isdigit():
             admin_id = exists["id"]
 
-        to_update = {"id": admin_id, "orgAccess": org_access, "name": name}
+        to_update = {"id": admin_id, "orgAccess": orgAccess, "name": name}
         update_url = self.url+admin_id
 
         if tags:
             self.__provided_tags_valid(tags)
             to_update["tags"] = tags
 
-        if org_access:
+        if orgAccess:
             try:
-                self.__provided_access_valid(org_access)
+                self.__provided_access_valid(orgAccess)
             except InvalidOrgPermissions as err:
                 print "ERROR: Invalid permissions for user %s \nPROVIDED: %s \
                 \nEXPECTED: %s" % (admin_id, err.provided, err.valid)
