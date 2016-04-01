@@ -109,7 +109,7 @@ class DashboardAdmins(object):
                 orgAccess: Their access level; valid values are full,
                 read-only, or none (for tag or network-level admins)
                 networks: A list of dictionaries formatted as
-                [network:network-id, access:access-level]; networks must be
+                [{id: network-id, access: access-level}]; networks must be
                 prexisting on Dashboard.
                 tags: A list of dictionaries formatted as
                 [{tag:tag-name}, {access:access-level}]; tags don't need to be
@@ -129,7 +129,8 @@ class DashboardAdmins(object):
             self.__provided_tags_valid(tags)
             admin["tags"] = tags
         if networks:
-            pass # still deciding how this is going to get structured
+            admin["networks"] = networks # still deciding how this is going to
+                                         # be validated
 
         new_admin = requests.post(self.url, json=admin, headers=self.headers)
 
