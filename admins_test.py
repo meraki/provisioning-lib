@@ -7,14 +7,20 @@ with open('key', 'r') as api_key:
 
 
 def test_add_valid():
-    """Testing all valid add conditions for users."""
+    """Testing all valid add conditions for users. Assert Dashboard returns HTTP
+        201 per the API documentation for adding users, and that all submitted
+        user parameters are returned."""
 
     valid_users = [
-        {"name": "test 1", "email": "test1@test.lol", "orgAccess": "read-only"},
-        {"name": "test 2", "email": "test2@test.lol", "orgAccess": "none",
+        {"name": "test 1", "email": "test1@test.foo", "orgAccess": "read-only"},
+        {"name": "test 2", "email": "test2@test.foo", "orgAccess": "none",
          "tags": [{"tag": "test tag", "access": "read-only"}]},
-        {"name": "test 3", "email": "test3@test.lol", "orgAccess": "none",
-         "networks": [{"access": "read-only", "id": "N_629378047925034734"}]}
+        {"name": "test 3", "email": "test3@test.foo", "orgAccess": "none",
+         "networks": [{"access": "read-only", "id": "N_629378047925034734"}]},
+        {"name": "test 4", "email": "test4@test.foo", "orgAccess": "none",
+         "networks": [{"access": "monitor-only", "id": "N_629378047925034734"}],
+         "tags": [{"tag": "another one", "access":"guest-ambassador"},
+                  {"tag": "last try", "access":"full"}]}
         ]
     for user in valid_users:
         test_request = TEST_CONNECTOR.add_admin(**user)
