@@ -82,9 +82,7 @@ class DashboardAdmins(object):
                                 a list of dictionaries.")
             elif not self.valid_tag_keys.issuperset(i.keys()):
                 raise FormatError("Error in tag format.")
-            elif not i["access"] in self.valid_target_vals:
-                raise InvalidOrgPermissions(i["access"],
-                                            self.valid_target_vals)
+            self.__provided_access_valid(i["access"])
 
 
     def __admin_exists(self, admin_id):
@@ -93,10 +91,9 @@ class DashboardAdmins(object):
             for admin in check.json():
                 if admin["email"] == admin_id or admin["id"] == admin_id:
                     return admin
-        except ValueError:
+        except ValueError: # Ignore empty responses
             pass
 
-        # print "No admin %s found" % admin_id
         return None
 
 
