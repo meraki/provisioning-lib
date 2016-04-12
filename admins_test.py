@@ -35,6 +35,9 @@ def test_add_valid():
         test_request = TEST_CONNECTOR.add_admin(**user)
         posted_user = test_request.json()
 
+        # Dashboard returns an empty list for networks and tags if they're not
+        # specified, so pop them along with unique user ID string
+
         for key in posted_user.keys():
             if (key == "id" or isinstance(posted_user[key], list) and
                     len(posted_user[key]) == 0):
