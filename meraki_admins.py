@@ -137,11 +137,8 @@ class DashboardAdmins(object):
         return new_admin
 
 
-    def update_admin(self, admin_id,
-                     orgAccess=None,
-                     name=None,
-                     tags=None,
-                     networks=None):
+    def update_admin(self, admin_id, name=None, orgAccess=None, networks=None,
+                     tags=None):
         """Update an existing admin's permissions or access.
 
         Dashboard ignores null or None values in spite of what it returns, and
@@ -163,7 +160,7 @@ class DashboardAdmins(object):
             admin_id = exists["id"]
 
         to_update = {"id": admin_id, "orgAccess": orgAccess, "name": name}
-        update_url = self.url+admin_id
+        update_url = self.url+"/"+admin_id
 
         if tags:
             self.__provided_tags_valid(tags)
@@ -176,6 +173,8 @@ class DashboardAdmins(object):
                 print "ERROR: Invalid permissions for user %s \nPROVIDED: %s \
                 \nEXPECTED: %s" % (admin_id, err.provided, err.valid)
 
+        if networks:
+            to_update["networks"] = networks
 
         updated = requests.put(url=update_url, json=to_update,
                                headers=self.headers)
@@ -197,7 +196,7 @@ class DashboardAdmins(object):
         elif not admin_id.isdigit():
             admin_id = exists["id"]
 
-        url = self.url+admin_id
+        url = self.url+"/"+admin_id
 
         return requests.delete(url, headers=self.headers)
 
