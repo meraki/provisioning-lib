@@ -23,7 +23,7 @@ VALID_UPDATES = [
     {"networks": [{"access": "monitor-only", "id":"N_629378047925035587"}],
      "admin_id": VALID_USERS[2]["email"]},
     {"tags": [{"tag": "updated", "access": "guest-ambassador"}],
-     "admin_id": VALID_UPDATES[3]["email"]}
+     "admin_id": VALID_USERS[3]["email"]}
     ]
 
 def test_add_valid():
@@ -34,19 +34,15 @@ def test_add_valid():
     for user in VALID_USERS:
         test_request = TEST_CONNECTOR.add_admin(**user)
         posted_user = test_request.json()
-        user_unhashables = {}
-        posted_unhashables = {}
-
 
         for key in posted_user.keys():
-            if isinstance(posted_user[key], list):
-                posted_unhashables[key] = posted_user.pop(key)
+            if (key == "id" or isinstance(posted_user[key], list) and
+                    len(posted_user[key]) == 0):
+                posted_user.pop(key)
 
-                if key in user.keys():
-                    user_unhashables[key] = user.pop(key)
-
-        assert (test_request.status_code == 201 and
-                set(user.items()).issubset(set(posted_user.items())) is True)
+        check_user = user.items().sort()
+        check_posted = posted_user.items().sort()
+        assert check_user == check_posted and test_request.status_code == 201
 
 def test_del_valid():
     "Testing deleting existing users. Assert Dashboard returns 204."
