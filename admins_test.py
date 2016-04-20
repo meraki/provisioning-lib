@@ -1,3 +1,4 @@
+import copy
 import pytest
 import meraki_admins
 
@@ -26,29 +27,61 @@ VALID_UPDATES = [
      "admin_id": VALID_USERS[3]["email"]}
     ]
 
+def __pop_untested(user):
+    """Dashboard returns an empty list for networks and tags if they're not
+       specified, so pop them along with unique user ID string."""
+
+    for key in user.keys():
+        if (key == "id" or isinstance(user[key], list) and
+                len(user[key]) == 0):
+            user.pop(key)
+    return user
+
 def test_add_valid():
     """Testing all valid add conditions for users. Assert Dashboard returns HTTP
-        201 per the API documentation for adding users, and that all submitted
-        user parameters are returned unmodified."""
+       201 per the API documentation for adding users, and that all submitted
+       user parameters are returned unmodified."""
 
     for user in VALID_USERS:
         test_request = TEST_CONNECTOR.add_admin(**user)
         posted_user = test_request.json()
 
-        # Dashboard returns an empty list for networks and tags if they're not
-        # specified, so pop them along with unique user ID string
+        posted_user = __pop_untested(posted_user)
 
-        for key in posted_user.keys():
-            if (key == "id" or isinstance(posted_user[key], list) and
-                    len(posted_user[key]) == 0):
-                posted_user.pop(key)
-
-        check_user = user.items().sort()
-        check_posted = posted_user.items().sort()
+        check_user = user.items()
+        check_user.sort()
+        check_posted = posted_user.items()
+        check_posted.sort()
         assert check_user == check_posted and test_request.status_code == 201
 
+
+def test_update_valid():
+    """Testing all valid modifications for existing users. Assert Dashboard
+       returns HTTP 200 and that only submitted parameters are returned
+       modified."""
+
+    original_users = copy.deepcopy(VALID_USERS)
+    for user in VALID_UPDATES:
+        test_request = TEST_CONNECTOR.update_admin(**user)
+        updated_user = test_request.json()
+
+        updated_user = __pop_untested(updated_user)
+
+        check_user = user.items()
+        check_user.sort()
+        check_posted = updated_user.items()
+        check_posted.sort()
+
+        # Remove modfied values from the posted sample
+        # This does not work yet
+        for key in user.keys():
+            pass
+
+
+
 def test_del_valid():
-    "Testing deleting existing users. Assert Dashboard returns 204."
+    """Testing deleting existing users. Assert Dashboard returns HTTP 204, and
+       that they're no longer contained in the user list post-removal."""
 
     for user in VALID_USERS:
         test_delete = TEST_CONNECTOR.del_admin(user["email"])

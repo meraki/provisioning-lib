@@ -40,11 +40,23 @@ class Error(Exception):
     pass
 
 class InvalidOrgPermissions(Error):
-    """Thrown when improper permissions are supplied."""
+    """Thrown when invalid Org-level permissions are supplied."""
     def __init__(self, provided=None, valid=None):
         self.provided = provided
         self.valid = valid
         self.default = "Org Permissions must be FULL, READ-ONLY, or NONE"
+
+    def __str__(self):
+        return repr(self.default)
+
+class InvalidNetTagPermissions(Error):
+    """Thrown when invalid Network or Tag permissions are supplied."""
+    pass
+
+class NullPermissionError(Error):
+    """Thrown when no permissionsare supplied."""
+    def __init__(self):
+        self.default = "No Org or Tag/Network level permissions supplied."
 
     def __str__(self):
         return repr(self.default)
@@ -68,7 +80,8 @@ class DashboardAdmins(object):
 
 
     def __provided_access_valid(self, access):
-        if access not in self.valid_access_vals:
+        if (access not in self.valid_access_vals and
+                access not in self.valid_target_vals):
             raise InvalidOrgPermissions(access, self.valid_access_vals)
 
 
@@ -120,7 +133,7 @@ class DashboardAdmins(object):
         admin = {"name": name, "email": email, "orgAccess": orgAccess}
         self.__provided_access_valid(orgAccess)
         if orgAccess.lower() == "none" and not tags and not networks:
-            pass
+            raise NullPermissionError()
 
         if tags:
             self.__provided_tags_valid(tags)
