@@ -1,3 +1,16 @@
+#######################################################################################################################
+# Cisco Meraki Provisioning API Python 3.x Module
+#
+# Overview
+# The purpose of this Python module is to provide a standard Python module to interact with the Meraki Provisioning API.
+# Each method in this function interacts seamlessly with the API and either returns data from the method call or a
+# status message indicating the result of the API call
+#
+# Dependencies
+# - Python 3.x
+# - 'requests' module
+#
+#######################################################################################################################
 import requests
 import json
 
@@ -589,7 +602,7 @@ tzlist = ['Africa/Abidjan',
           'WET',
           'W-SU',
           'Zulu'
-]
+          ]
 
 
 def getorgdevices(apikey, organizationid):
@@ -976,8 +989,9 @@ def bindtotemplate(apikey, networkid, templateid, autobind='false'):
             'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
         return None
     elif statuscode == '200':
-        print('Network ID {0} bound to configuration template ID {1}'.format(str(networkid),str(templateid)))
+        print('Network ID {0} bound to configuration template ID {1}'.format(str(networkid), str(templateid)))
         return None
+
 
 def unbindfromtemplate(apikey, networkid):
     posturl = 'https://dashboard.meraki.com/api/v0/networks/{0}/unbind'.format(str(networkid))
@@ -997,7 +1011,7 @@ def unbindfromtemplate(apikey, networkid):
         print(
             'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
         return None
-    elif statuscode=='200':
+    elif statuscode == '200':
         print('Network ID {0} unbound from configuration template'.format(str(networkid)))
         return None
 
@@ -1162,7 +1176,7 @@ def addadmin(apikey, organizationid, email, name, orgaccess=None, tags=None, tag
     elif tags is not None and tagaccess is not None:
         x = 0
         while x < len(tags):
-            posttags.append({'tag': tags[x],'access': tagaccess[x]})
+            posttags.append({'tag': tags[x], 'access': tagaccess[x]})
             x += 1
     else:
         pass
@@ -1187,7 +1201,7 @@ def addadmin(apikey, organizationid, email, name, orgaccess=None, tags=None, tag
     elif networks is not None and netaccess is not None:
         x = 0
         while x < len(networks):
-            postnets.append({'id': networks[x],'access': netaccess[x]})
+            postnets.append({'id': networks[x], 'access': netaccess[x]})
             x += 1
     else:
         pass
@@ -1295,8 +1309,8 @@ def getadmins(apikey, organizationid):
         return json.loads(dashboard.text)
 
 
-def addnetwork(apikey, organizationID, name, type, tags, tz):
-    posturl = 'https://dashboard.meraki.com/api/v0/organizations/{0}/networks'.format(str(organizationID))
+def addnetwork(apikey, organizationid, name, nettype, tags, tz):
+    posturl = 'https://dashboard.meraki.com/api/v0/organizations/{0}/networks'.format(str(organizationid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -1316,7 +1330,7 @@ def addnetwork(apikey, organizationID, name, type, tags, tz):
 
     postdata = {
         'name': format(str(name)),
-        'type': format(str(type)),
+        'type': format(str(nettype)),
         'tags': format(str(tags)),
         'timeZone': format(str(tz))
     }
@@ -1373,11 +1387,12 @@ def delnetwork(apikey, networkid):
             'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
         return None
 
-def updateadmin(apikey, organizationid, adminid, email, name=None, orgaccess=None, tags=None, tagaccess=None, networks=None,
-             netaccess=None):
 
+def updateadmin(apikey, organizationid, adminid, email, name=None, orgaccess=None, tags=None, tagaccess=None,
+                networks=None, netaccess=None):
 
-    puturl = 'https://dashboard.meraki.com/api/v0/organizations/{0}/admins/{1}'.format(str(organizationid),str(adminid))
+    puturl = 'https://dashboard.meraki.com/api/v0/organizations/{0}/admins/{1}'.format(str(organizationid),
+                                                                                       str(adminid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -1386,8 +1401,8 @@ def updateadmin(apikey, organizationid, adminid, email, name=None, orgaccess=Non
     puttags = []
 
     if orgaccess is None and tags is None and networks is None and name is None:
-        print("Administrator account updates must include Organization, Networks, or Tags permission changes or an updated"
-              " name attribute")
+        print("Administrator account updates must include Organization, Networks, or Tags permission changes or an "
+              "updated name attribute")
         return None
 
     if tags is not None and tagaccess is None:
@@ -1454,7 +1469,7 @@ def updateadmin(apikey, organizationid, adminid, email, name=None, orgaccess=Non
                 'tags': puttags
                 }
 
-        elif len(postnets) > 0 and len(puttags) == 0:
+        elif len(putnets) > 0 and len(puttags) == 0:
             putdata = {
                 'name': format(str(name)),
                 'email': format(str(email)),
@@ -1478,7 +1493,7 @@ def updateadmin(apikey, organizationid, adminid, email, name=None, orgaccess=Non
                 'tags': puttags
                 }
 
-        elif len(postnets) > 0 and len(puttags) == 0:
+        elif len(putnets) > 0 and len(puttags) == 0:
             putdata = {
                 'email': format(str(email)),
                 'orgAccess': orgaccess,
@@ -1492,7 +1507,7 @@ def updateadmin(apikey, organizationid, adminid, email, name=None, orgaccess=Non
                 'tags': puttags,
                 'networks': putnets
                 }
-    print(puturl,putdata)
+    print(puturl, putdata)
     dashboard = requests.put(puturl, data=json.dumps(putdata), headers=headers)
 #
 # Check for HTTP 4XX/5XX response code.
@@ -1515,4 +1530,3 @@ def updateadmin(apikey, organizationid, adminid, email, name=None, orgaccess=Non
     else:
         print(statuscode)
         return None
-
