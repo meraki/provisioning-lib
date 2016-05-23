@@ -1530,3 +1530,58 @@ def updateadmin(apikey, organizationid, adminid, email, name=None, orgaccess=Non
     else:
         print(statuscode)
         return None
+
+
+def updatenonmerakivpn(apikey, orgid, peername, peerip, secret, remotenets, tags):
+    puturl = 'https://dashboard.meraki.com/api/v0/organizations/{0}/thirdPartyVPNPeers'.format(str(orgid))
+    headers = {
+        'x-cisco-meraki-api-key': format(str(apikey)),
+        'Content-Type': 'application/json'
+    }
+    putdata = {
+        'name': format(str(peername)),
+        'publicIp': format(str(peerip)),
+        'privateSubnets': remotenets,
+        'secret': format(str(secret)),
+        'tags': tags
+    }
+    print(putdata)
+    print(puturl)
+    putdata = json.dumps(putdata)
+    dashboard = requests.put(puturl, data=putdata, headers=headers)
+
+    #
+    # Check for HTTP 4XX/5XX response code.
+    # If 4XX/5XX response code, print error message with response code and return None from function
+    #
+
+    statuscode = format(str(dashboard.status_code))
+    if statuscode[:1] == '4' or statuscode[:1] == '5':
+        print(
+            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
+        return None
+    else:
+        print(statuscode)
+        return json.loads(dashboard.text)
+
+
+def getnonmerakivpnpeers(apikey, organizationid):
+    geturl = 'https://dashboard.meraki.com/api/v0/organizations/{0}/thirdPartyVPNPeers'.format(str(organizationid))
+    headers = {
+        'x-cisco-meraki-api-key': format(str(apikey)),
+        'Content-Type': 'application/json'
+    }
+    dashboard = requests.get(geturl, headers=headers)
+
+    #
+    # Check for HTTP 4XX/5XX response code.
+    # If 4XX/5XX response code, print error message with response code and return None from function
+    #
+
+    statuscode = format(str(dashboard.status_code))
+    if statuscode[:1] == '4' or statuscode[:1] == '5':
+        print(
+            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
+        return None
+    else:
+        return json.loads(dashboard.text)
