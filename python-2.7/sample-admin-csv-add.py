@@ -46,8 +46,8 @@ for row in csvReader:
     params_list.append(params_format)
 
 #get all of the orgs this API key has access to
-orgsJson = requests.get(orgurl, headers=headers)
-output = json.loads(orgsJson.text)
+orgsjson = requests.get(orgurl, headers=headers)
+output = json.loads(orgsjson.text)
 
 #loop through the response (output), store the Org ID as 'id' and create the admins URL for each Org ID    
 for row in output:
