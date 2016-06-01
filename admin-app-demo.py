@@ -17,8 +17,6 @@ orgurl="https://dashboard.meraki.com/api/v0/organizations"
 
 authheader = {"X-Cisco-Meraki-API-Key":authkey,"Content-type":"application/json"}
 
-
-
 #Proove Checkboxes to delete/add orgs for an admin
 if form.getlist('nonorg'):
         adnonorgs = form.getlist('nonorg')
@@ -120,16 +118,15 @@ def getshard(orgid):
 
 #Add user to an org
 def adduser(nonorgs,email):
-        global authkey, orgurl
-        privilege={"name":"Dummy Dummy", "email":email,"orgAccess":"full"}
-        data_json = json.dumps(privilege)
+        privilege={"name":"added via API", "email":email,"orgAccess":"full"}
+        datajson = json.dumps(privilege)
         for i in nonorgs:
                posturl="https://"+getshard(i)+"/api/v0/organizations/"+i+"/admins"
-               newadmin=requests.post(posturl, data = data_json, headers=authheader).text
+               newadmin=requests.post(posturl, data = datajson, headers=authheader).text
 
 #Delete user of an org
 def deluser(orgs,email):
-        global authkey, orgurl
+        global authheader, orgurl
         for i in orgs:
                 j=getadminid(i,email)
                 posturl="https://"+getshard(i)+"/api/v0/organizations/"+str(i)+"/admins/"+str(j)
@@ -139,7 +136,6 @@ def deluser(orgs,email):
 #MAIN PART
 print
 print myheader
-
 if form.getlist('nonorg'):
         adduser(adnonorgs,email)
 
@@ -152,7 +148,7 @@ if email and "@" in email:
         partof=checkadmin(email,allorgsinfo)
         notpartof=checknotadmin(partof,allorgsinfo)
         print '<form action="/cgi-bin/admin-app-demo.py" method="post">'
-        print email + ' is part of the following Organizations</br> Check the box if you would like to delete this admin out of some organizations <input type=hidden name="email" value="' + email + '">'
+        print email + ' is part of the following Organizations</br> Check the box if you would like to delete this admin out of some organizations <input type=hidden name="email" value="' + email + '"> <input type=hidden name="APIkey" value="' + authkey + '">'
         print '<table style="width:25%"><tr><td><b>Organization</b></td><td><b>delete??</b></td></tr>'
         for i in partof:
                 orgname=getorgname(i,allorgsinfo)
