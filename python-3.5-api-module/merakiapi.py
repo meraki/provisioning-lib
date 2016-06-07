@@ -13,6 +13,7 @@
 #######################################################################################################################
 import requests
 import json
+import ast
 
 tzlist = ['Africa/Abidjan',
           'Africa/Accra',
@@ -1532,22 +1533,26 @@ def updateadmin(apikey, organizationid, adminid, email, name=None, orgaccess=Non
         return None
 
 
-def updatenonmerakivpn(apikey, orgid, peername, peerip, secret, remotenets, tags):
+def updatenonmerakivpn(apikey, orgid, peername, peerip, secret, remotenets):
     puturl = 'https://dashboard.meraki.com/api/v0/organizations/{0}/thirdPartyVPNPeers'.format(str(orgid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
     }
+    # peername = ast.literal_eval(peername)
+    # peerip = ast.literal_eval(peerip)
+    # remotenets = ast.literal_eval(remotenets)
+    # secret = ast.literal_eval(secret)
     putdata = {
-        'name': format(str(peername)),
-        'publicIp': format(str(peerip)),
-        'privateSubnets': remotenets,
-        'secret': format(str(secret)),
-        'tags': tags
+        "name": peername,
+        "publicIp": peerip,
+        "privateSubnets": remotenets,
+        "secret": secret
     }
+    putdata=json.dumps(putdata)
     print(putdata)
     print(puturl)
-    putdata = json.dumps(putdata)
+
     dashboard = requests.put(puturl, data=putdata, headers=headers)
 
     #

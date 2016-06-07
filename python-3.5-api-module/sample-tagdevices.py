@@ -1,9 +1,10 @@
-import requests
 import json
 import os
 import sys
 import time
+
 import merakiapi
+import requests
 
 # Enter User's API Key
 apikey = 'xxxxxx'
