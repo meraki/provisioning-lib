@@ -48,8 +48,6 @@ for network in orgnetworks:
         networktags = network['tags']
     devicelist = merakiapi.getnetworkdevices(apikey, network['id'])
     for device in devicelist:
-        print(device)
-        print(device['serial'])
         if 'serial' not in device:
             serialnum = ''
         else:
