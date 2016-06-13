@@ -38,12 +38,12 @@ else:
     print('Network name,Serial,Network tags,Name,Tags,Address,Notes,Static IP,Netmask,Gateway,DNS1,DNS2,VLAN',
           file=writefile)
 
-orgnetworks=merakiapi.getnetworklist(apikey, orgid)
+orgnetworks = merakiapi.getnetworklist(apikey, orgid)
 
 for network in orgnetworks:
     networkname = network['name']
     if 'tags' not in network:
-        networktags=''
+        networktags = ''
     else:
         networktags = network['tags']
     devicelist = merakiapi.getnetworkdevices(apikey, network['id'])
@@ -61,22 +61,22 @@ for network in orgnetworks:
         else:
             devicemodel = device['model']
         if 'lanIp' not in device:
-            deviceip=''
+            deviceip = ''
         else:
             deviceip = device['lanIp']
         if 'tags' not in device:
-            devicetags=''
+            devicetags = ''
         else:
             devicetags = device['tags']
         if 'address' not in device:
-            deviceaddr=''
+            deviceaddr = ''
         else:
             deviceaddr = device['address']
-            deviceaddr = re.sub(',', ' ',deviceaddr)
+            deviceaddr = re.sub(',', ' ', deviceaddr)
 
         print('{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12}'.format(str(networkname), str(serialnum),
                                                                               str(networktags), str(devicename),
                                                                               str(devicetags), str(deviceaddr),
-                                                                              str(notes), str(deviceip),str(netmask),
+                                                                              str(notes), str(deviceip), str(netmask),
                                                                               str(gateway), str(dns1), str(dns2),
-                                                                              str(vlan)),file=writefile)
+                                                                              str(vlan)), file=writefile)
