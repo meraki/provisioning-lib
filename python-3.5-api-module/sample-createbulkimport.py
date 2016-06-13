@@ -83,3 +83,4 @@ for network in orgnetworks:
                                                                               str(notes), str(deviceip), str(netmask),
                                                                               str(gateway), str(dns1), str(dns2),
                                                                               str(vlan)), file=writefile)
+writefile.close()
