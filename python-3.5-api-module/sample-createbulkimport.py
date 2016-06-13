@@ -72,6 +72,9 @@ for network in orgnetworks:
             deviceaddr = ''
         else:
             deviceaddr = device['address']
+
+            # Remove commas from address information as bulk network creator doesn't accept commas in field data
+
             deviceaddr = re.sub(',', ' ', deviceaddr)
 
         print('{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12}'.format(str(networkname), str(serialnum),
