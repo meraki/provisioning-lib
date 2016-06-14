@@ -27,6 +27,7 @@ vlan = ''
 notes = 'This is a test'
 
 # API doesn't provide gateway information for devices, this variable allows defining gateway manually
+
 gateway = '1.1.1.1'
 
 # Check for existing bulk import file, if it doesn't exist create new file with header line
