@@ -20,15 +20,15 @@ netmask = '255.255.255.0'
 
 # API doesn't provide VLAN ID information for device, this variable allows defining VLAN ID manually
 
-vlan = ''
+vlan = '#'
 
 # API doesn't provide notes information for device, this variable allows defining notes manually
 
-notes = 'This is a test'
+notes = 'This text will be inserted in the notes field of all devices'
 
 # API doesn't provide gateway information for devices, this variable allows defining gateway manually
 
-gateway = '1.1.1.1'
+gateway = '###.###.###.###'
 
 # Check for existing bulk import file, if it doesn't exist create new file with header line
 
