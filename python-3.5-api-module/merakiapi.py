@@ -993,8 +993,7 @@ def bindtotemplate(apikey, networkid, templateid, autobind='false'):
 
     statuscode = format(str(dashboard.status_code))
     if statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
+        print('\nUnable to bind network using the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
         return None
     elif statuscode == '200':
         print('Network ID {0} bound to configuration template ID {1}'.format(str(networkid), str(templateid)))
@@ -1056,19 +1055,21 @@ def deltemplate(apikey, organizationid, templateid):
         return None
 
 
-def updatevlan(apikey, networkid, vlanid, vlanname, mxip, subnetip):
+def updatevlan(apikey, networkid, vlanid, vlanname = None, mxip = None, subnetip = None):
     puturl = '{0}/networks/{1}/vlans/{2}'.format(str(base_url), str(networkid), str(vlanid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
     }
-    putdata = {
-        'name': format(str(vlanname)),
-        'applianceIp': format(str(mxip)),
-        'subnet': format(str(subnetip))
-    }
+    putdata = {}
+    if vlanname is not None:
+        putdata['name'] = format(str(vlanname))
+    if mxip is not None:
+        putdata['applianceIp'] = format(str(mxip))
+    if subnetip is not None:
+        putdata['subnet'] = format(str(subnetip))
+
     putdata = json.dumps(putdata)
-    print(putdata)
     dashboard = requests.put(puturl, data=putdata, headers=headers)
 
     #
@@ -1082,7 +1083,7 @@ def updatevlan(apikey, networkid, vlanid, vlanname, mxip, subnetip):
             'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
         return None
     else:
-        print(statuscode)
+        print('Success - HTTP Status Code: {0}'.format(str(statuscode)))
         return json.loads(dashboard.text)
 
 
