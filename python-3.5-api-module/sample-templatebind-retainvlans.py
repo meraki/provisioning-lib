@@ -11,7 +11,6 @@ apikey = 'ENTER API KEY HERE'
 orgid = 'ENTER ORG ID HERE'
 templatename = 'ENTER THE NAME OF THE TARGET TEMPLATE HERE'
 
-
 templates = merakiapi.gettemplates(apikey, orgid)
 
 for template in templates:
@@ -19,29 +18,31 @@ for template in templates:
         templateid = template['id']
 
 mxnetworks = []
-networkvlans = []
-
-x = 0
 
 orgnets = merakiapi.getnetworklist(apikey, orgid)
 
 for network in orgnets:
     if network['type'] == 'appliance':
-        mxnetworks.append({'id': network['id']})
+        mxnetworks.append({'id': network['id'], 'name': network['name']})
 
 for mxnetwork in mxnetworks:
+    newnet = True
     vlans = merakiapi.getvlans(apikey, mxnetwork['id'])
     if vlans is None:
         pass
-    else:
-        for vlan in vlans:
-            networkvlans.append({'id ': x, 'networkid': mxnetwork['id'], 'vlanid': vlan['id'], 'name': vlan['name'],
-                                 'mxip': vlan['applianceIp'], 'subnet': vlan['subnet']})
-            x += 1
-            merakiapi.bindtotemplate(apikey,mxnetwork['id'],templateid)
+    elif newnet is True:
+        print('\nBinding Network - {0}'.format(str(mxnetwork['name'])))
+        merakiapi.bindtotemplate(apikey, mxnetwork['id'], templateid)
+        newnet = False
+    x = 0
 
-for nvlan in networkvlans:
-    merakiapi.updatevlan(apikey, nvlan['networkid'], nvlan['vlanid'], nvlan['name'], nvlan['mxip'], nvlan['subnet'])
-
-
-
+    for vlan in vlans:
+        nvlan = {'idx ': x, 'networkid': mxnetwork['id'], 'vlanid': vlan['id'], 'name': vlan['name'],
+                             'mxip': vlan['applianceIp'], 'subnet': vlan['subnet']}
+        print('\nUpdating VLAN ID {0} in Network {1}:\nSubnet IP {2}\nAppliance IP {3}'.format(str(nvlan['vlanid']),
+                                                                                      str(mxnetwork['name']),
+                                                                                      str(nvlan['subnet']),
+                                                                                      str(nvlan['mxip'])))
+        merakiapi.updatevlan(apikey, nvlan['networkid'], nvlan['vlanid'], mxip = nvlan['mxip'],
+                             subnetip = vlan['subnet'])
+        x += 1
