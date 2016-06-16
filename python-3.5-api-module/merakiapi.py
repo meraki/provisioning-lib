@@ -13,7 +13,6 @@
 #######################################################################################################################
 import requests
 import json
-import ast
 
 tzlist = ['Africa/Abidjan',
           'Africa/Accra',
@@ -605,11 +604,18 @@ tzlist = ['Africa/Abidjan',
           'Zulu'
           ]
 
+base_url = 'https://dashboard.meraki.com/api/v0'
+
+
+class Error(Exception):
+    """Base module exception."""
+    pass
+
 
 def getorgdevices(apikey, organizationid):
-    geturl = 'https://dashboard.meraki.com/api/v0/organizations/{0}/inventory'.format(str(organizationid))
+    geturl = '{0}/organizations/{1}/inventory'.format(str(base_url), str(organizationid))
     headers = {
-        'x-cisco-meraki-api-key': apikey,
+        'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
     }
     dashboard = requests.get(geturl, headers=headers)
@@ -629,7 +635,7 @@ def getorgdevices(apikey, organizationid):
 
 
 def getnetworkdevices(apikey, networkid):
-    geturl = 'https://dashboard.meraki.com/api/v0/networks/{0}/devices'.format(str(networkid))
+    geturl = '{0}/networks/{1}/devices'.format(str(base_url), str(networkid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -651,7 +657,7 @@ def getnetworkdevices(apikey, networkid):
 
 
 def getorgadmins(apikey, organizationid):
-    geturl = 'https://dashboard.meraki.com/api/v0/organizations/{0}/admins'.format(str(organizationid))
+    geturl = '{0}/organizations/{1}/admins'.format(str(base_url), str(organizationid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -673,7 +679,7 @@ def getorgadmins(apikey, organizationid):
 
 
 def getnetworklist(apikey, organizationid):
-    geturl = 'https://dashboard.meraki.com/api/v0/organizations/{0}/networks'.format(str(organizationid))
+    geturl = '{0}/organizations/{1}/networks'.format(str(base_url), str(organizationid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -695,7 +701,7 @@ def getnetworklist(apikey, organizationid):
 
 
 def getlicensestate(apikey, organizationid):
-    geturl = 'https://dashboard.meraki.com/api/v0/organizations/{0}/licenseState'.format(str(organizationid))
+    geturl = '{0}/organizations/{1}/licenseState'.format(str(base_url), str(organizationid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -717,7 +723,7 @@ def getlicensestate(apikey, organizationid):
 
 
 def getdevicedetail(apikey, networkid, serialnumber):
-    geturl = 'https://dashboard.meraki.com/api/v0/networks/{0}/devices/{1}'.format(str(networkid), str(serialnumber))
+    geturl = '{0}/networks/{1}/devices/{2}'.format(str(base_url), str(networkid), str(serialnumber))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -739,7 +745,7 @@ def getdevicedetail(apikey, networkid, serialnumber):
 
 
 def getnetworkdetail(apikey, networkid):
-    geturl = 'https://dashboard.meraki.com/api/v0/networks/{0}'.format(str(networkid))
+    geturl = '{0}/networks/{1}'.format(str(base_url), str(networkid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -761,7 +767,7 @@ def getnetworkdetail(apikey, networkid):
 
 
 def getconfigtemplates(apikey, organizationid):
-    geturl = 'https://dashboard.meraki.com/api/v0/organizations/{0}/configTemplates'.format(str(organizationid))
+    geturl = '{0}/organizations/{1}/configTemplates'.format(str(base_url), str(organizationid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -783,7 +789,7 @@ def getconfigtemplates(apikey, organizationid):
 
 
 def getsnmpsettings(apikey, organizationid):
-    geturl = 'https://dashboard.meraki.com/api/v0/organizations/{0}/snmp'.format(str(organizationid))
+    geturl = '{0}/organizations/{1}/snmp'.format(str(base_url), str(organizationid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -805,7 +811,7 @@ def getsnmpsettings(apikey, organizationid):
 
 
 def getvpnpeers(apikey, organizationid):
-    geturl = 'https://dashboard.meraki.com/api/v0/organizations/{0}/thirdPartyVPNPeers'.format(str(organizationid))
+    geturl = '{0}/organizations/{1}/thirdPartyVPNPeers'.format(str(base_url), str(organizationid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -827,7 +833,7 @@ def getvpnpeers(apikey, organizationid):
 
 
 def getsamlroles(apikey, organizationid):
-    geturl = 'https://dashboard.meraki.com/api/v0/organizations/{0}/samlRoles'.format(str(organizationid))
+    geturl = '{0}/organizations/{1}/samlRoles'.format(str(base_url), str(organizationid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -849,7 +855,7 @@ def getsamlroles(apikey, organizationid):
 
 
 def getswitchstacks(apikey, networkid):
-    geturl = 'https://dashboard.meraki.com/api/v0/networks/{0}/switchStacks'.format(str(networkid))
+    geturl = '{0}/networks/{1}/switchStacks'.format(str(base_url), str(networkid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -871,7 +877,7 @@ def getswitchstacks(apikey, networkid):
 
 
 def getswitchstackmembers(apikey, networkid, stackid):
-    geturl = 'https://dashboard.meraki.com/api/v0/networks/{0}/switchStacks/{1}'.format(str(networkid), str(stackid))
+    geturl = '{0}/networks/{1}/switchStacks/{2}'.format(str(base_url), str(networkid), str(stackid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -893,7 +899,7 @@ def getswitchstackmembers(apikey, networkid, stackid):
 
 
 def getvlans(apikey, networkid):
-    geturl = 'https://dashboard.meraki.com/api/v0/networks/{0}/vlans'.format(str(networkid))
+    geturl = '{0}/networks/{1}/vlans'.format(str(base_url), str(networkid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -918,7 +924,7 @@ def getvlans(apikey, networkid):
 
 
 def getvlandetail(apikey, networkid, vlanid):
-    geturl = 'https://dashboard.meraki.com/api/v0/networks/{0}/vlans/{1}'.format(str(networkid), str(vlanid))
+    geturl = '{0}/networks/{1}/vlans/{2}'.format(str(base_url), str(networkid), str(vlanid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -943,7 +949,7 @@ def getvlandetail(apikey, networkid, vlanid):
 
 
 def gettemplates(apikey, organizationid):
-    geturl = 'https://dashboard.meraki.com/api/v0/organizations/{0}/configTemplates'.format(str(organizationid))
+    geturl = '{0}/organizations/{1}/configTemplates'.format(str(base_url), str(organizationid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -968,7 +974,7 @@ def gettemplates(apikey, organizationid):
 
 
 def bindtotemplate(apikey, networkid, templateid, autobind='false'):
-    posturl = 'https://dashboard.meraki.com/api/v0/networks/{0}/bind'.format(str(networkid))
+    posturl = '{0}/networks/{1}/bind'.format(str(base_url), str(networkid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -995,7 +1001,7 @@ def bindtotemplate(apikey, networkid, templateid, autobind='false'):
 
 
 def unbindfromtemplate(apikey, networkid):
-    posturl = 'https://dashboard.meraki.com/api/v0/networks/{0}/unbind'.format(str(networkid))
+    posturl = '{0}/networks/{1}/unbind'.format(str(base_url), str(networkid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -1018,8 +1024,7 @@ def unbindfromtemplate(apikey, networkid):
 
 
 def deltemplate(apikey, organizationid, templateid):
-    delurl = 'https://dashboard.meraki.com/api/v0/organizations/{0}/configTemplates/{1}'.format(str(organizationid),
-                                                                                                str(templateid))
+    delurl = '{0}/organizations/{1}/configTemplates/{2}'.format(str(base_url), str(organizationid), str(templateid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -1051,7 +1056,7 @@ def deltemplate(apikey, organizationid, templateid):
 
 
 def updatevlan(apikey, networkid, vlanid, vlanname, mxip, subnetip):
-    puturl = 'https://dashboard.meraki.com/api/v0/networks/{0}/vlans/{1}'.format(str(networkid), str(vlanid))
+    puturl = '{0}/networks/{1}/vlans/{2}'.format(str(base_url), str(networkid), str(vlanid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -1062,6 +1067,7 @@ def updatevlan(apikey, networkid, vlanid, vlanname, mxip, subnetip):
         'subnet': format(str(subnetip))
     }
     putdata = json.dumps(putdata)
+    print(putdata)
     dashboard = requests.put(puturl, data=putdata, headers=headers)
 
     #
@@ -1080,7 +1086,7 @@ def updatevlan(apikey, networkid, vlanid, vlanname, mxip, subnetip):
 
 
 def addvlan(apikey, networkid, vlanid, vlanname, mxip, subnetip):
-    posturl = 'https://dashboard.meraki.com/api/v0/networks/{0}/vlans'.format(str(networkid))
+    posturl = '{0}/networks/{1}/vlans'.format(str(base_url), str(networkid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -1118,7 +1124,7 @@ def addvlan(apikey, networkid, vlanid, vlanname, mxip, subnetip):
 
 
 def delvlan(apikey, networkid, vlanid):
-    delurl = 'https://dashboard.meraki.com/api/v0/networks/{0}/vlans/{1}'.format(str(networkid), str(vlanid))
+    delurl = '{0}/networks/{1}/vlans/{2}'.format(str(base_url), str(networkid), str(vlanid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -1147,7 +1153,7 @@ def delvlan(apikey, networkid, vlanid):
 
 def addadmin(apikey, organizationid, email, name, orgaccess=None, tags=None, tagaccess=None, networks=None,
              netaccess=None):
-    posturl = 'https://dashboard.meraki.com/api/v0/organizations/{0}/admins'.format(str(organizationid))
+    posturl = '{0}/organizations/{1}/admins'.format(str(base_url), str(organizationid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -1263,8 +1269,7 @@ def addadmin(apikey, organizationid, email, name, orgaccess=None, tags=None, tag
 
 
 def deladmin(apikey, organizationid, adminid):
-    delurl = 'https://dashboard.meraki.com/api/v0/organizations/{0}/admins/{1}'.format(str(organizationid),
-                                                                                       str(adminid))
+    delurl = '{0}/organizations/{1}/admins/{2}'.format(str(base_url), str(organizationid), str(adminid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -1289,7 +1294,7 @@ def deladmin(apikey, organizationid, adminid):
 
 
 def getadmins(apikey, organizationid):
-    geturl = 'https://dashboard.meraki.com/api/v0/organizations/{0}/admins'.format(str(organizationid))
+    geturl = '{0}/organizations/{1}/admins'.format(str(base_url), str(organizationid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -1311,7 +1316,7 @@ def getadmins(apikey, organizationid):
 
 
 def addnetwork(apikey, organizationid, name, nettype, tags, tz):
-    posturl = 'https://dashboard.meraki.com/api/v0/organizations/{0}/networks'.format(str(organizationid))
+    posturl = '{0}/organizations/{1}/networks'.format(str(base_url), str(organizationid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -1362,7 +1367,7 @@ def addnetwork(apikey, organizationid, name, nettype, tags, tz):
 
 
 def delnetwork(apikey, networkid):
-    delurl = 'https://dashboard.meraki.com/api/v0/networks/{0}'.format(str(networkid))
+    delurl = '{0}/networks/{1}'.format(str(base_url), str(networkid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -1392,8 +1397,7 @@ def delnetwork(apikey, networkid):
 def updateadmin(apikey, organizationid, adminid, email, name=None, orgaccess=None, tags=None, tagaccess=None,
                 networks=None, netaccess=None):
 
-    puturl = 'https://dashboard.meraki.com/api/v0/organizations/{0}/admins/{1}'.format(str(organizationid),
-                                                                                       str(adminid))
+    puturl = '{0}/organizations/{1}/admins/{2}'.format(str(base_url), str(organizationid), str(adminid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -1534,22 +1538,18 @@ def updateadmin(apikey, organizationid, adminid, email, name=None, orgaccess=Non
 
 
 def updatenonmerakivpn(apikey, orgid, peername, peerip, secret, remotenets):
-    puturl = 'https://dashboard.meraki.com/api/v0/organizations/{0}/thirdPartyVPNPeers'.format(str(orgid))
+    puturl = '{0}/organizations/{1}/thirdPartyVPNPeers'.format(str(base_url), str(orgid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
     }
-    # peername = ast.literal_eval(peername)
-    # peerip = ast.literal_eval(peerip)
-    # remotenets = ast.literal_eval(remotenets)
-    # secret = ast.literal_eval(secret)
     putdata = {
         "name": peername,
         "publicIp": peerip,
         "privateSubnets": remotenets,
         "secret": secret
     }
-    putdata=json.dumps(putdata)
+    putdata = json.dumps(putdata)
     print(putdata)
     print(puturl)
 
@@ -1571,7 +1571,7 @@ def updatenonmerakivpn(apikey, orgid, peername, peerip, secret, remotenets):
 
 
 def getnonmerakivpnpeers(apikey, organizationid):
-    geturl = 'https://dashboard.meraki.com/api/v0/organizations/{0}/thirdPartyVPNPeers'.format(str(organizationid))
+    geturl = '{0}/organizations/{1}/thirdPartyVPNPeers'.format(str(base_url), str(organizationid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
