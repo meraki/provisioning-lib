@@ -1000,6 +1000,31 @@ def bindtotemplate(apikey, networkid, templateid, autobind='false'):
         return None
 
 
+def adddevtonet(apikey, networkid, serial):
+    posturl = '{0}/networks/{1}/devices/claim'.format(str(base_url), str(networkid))
+    headers = {
+        'x-cisco-meraki-api-key': format(str(apikey)),
+        'Content-Type': 'application/json'
+    }
+    postdata = {
+        'serial': format(str(serial))
+    }
+    dashboard = requests.post(posturl, data=json.dumps(postdata), headers=headers)
+
+    #
+    # Check for HTTP 4XX/5XX response code.
+    # If 4XX/5XX response code, print error message with response code and return None from function
+    #
+
+    statuscode = format(str(dashboard.status_code))
+    if statuscode[:1] == '4' or statuscode[:1] == '5':
+        print('\nUnable to add device to network using the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
+        return None
+    elif statuscode == '200':
+        print('Device {0} added to Network ID {1}'.format(str(serial), str(networkid)))
+        return None
+
+
 def unbindfromtemplate(apikey, networkid):
     posturl = '{0}/networks/{1}/unbind'.format(str(base_url), str(networkid))
     headers = {
