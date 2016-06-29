@@ -22,7 +22,7 @@ mxnetworks = []
 orgnets = merakiapi.getnetworklist(apikey, orgid)
 
 for network in orgnets:
-    if network['type'] == 'appliance':
+    if network['type'] == 'appliance' and network['name'][:2] == 'zz':
         mxnetworks.append({'id': network['id'], 'name': network['name']})
 
 for mxnetwork in mxnetworks:
@@ -37,12 +37,12 @@ for mxnetwork in mxnetworks:
     x = 0
 
     for vlan in vlans:
-        nvlan = {'idx ': x, 'networkid': mxnetwork['id'], 'vlanid': vlan['id'], 'name': vlan['name'],
-                             'mxip': vlan['applianceIp'], 'subnet': vlan['subnet']}
+        nvlan = {'idx': x, 'networkid': mxnetwork['id'], 'vlanid': vlan['id'], 'name': vlan['name'],
+                 'mxip': vlan['applianceIp'], 'subnet': vlan['subnet']}
         print('\nUpdating VLAN ID {0} in Network {1}:\nSubnet IP {2}\nAppliance IP {3}'.format(str(nvlan['vlanid']),
-                                                                                      str(mxnetwork['name']),
-                                                                                      str(nvlan['subnet']),
-                                                                                      str(nvlan['mxip'])))
-        merakiapi.updatevlan(apikey, nvlan['networkid'], nvlan['vlanid'], mxip = nvlan['mxip'],
-                             subnetip = vlan['subnet'])
+                                                                                               str(mxnetwork['name']),
+                                                                                               str(nvlan['subnet']),
+                                                                                               str(nvlan['mxip'])))
+        merakiapi.updatevlan(apikey, nvlan['networkid'], nvlan['vlanid'], mxip=nvlan['mxip'],
+                             subnetip=vlan['subnet'])
         x += 1
