@@ -612,8 +612,88 @@ class Error(Exception):
     """Base module exception."""
     pass
 
+class OrgPermissionError(Error):
+    """Thrown when supplied API Key does not have access to supplied Organization ID"""
+    def __init__(self):
+        self.default = 'Invalid Organization ID - Current API Key does not have access to this Organization'
+
+
+    def __str__(self):
+        return repr(self.default)
+
+
+def __isjson(myjson):
+    """Validates if passed object is a valid JSON Feed, used to prevent json.loads exceptions"""
+    try:
+        json_object = json.loads(myjson)
+    except ValueError as e:
+        return False
+    return True
+
+
+def __hasorgaccess(apikey, targetorg):
+    """Validate if API Key has access to passed Organization ID"""
+    validorg = False
+    geturl = '{0}/organizations'.format(str(base_url))
+    headers = {
+        'x-cisco-meraki-api-key': format(str(apikey)),
+        'Content-Type': 'application/json'
+    }
+
+    dashboard = requests.get(geturl, headers=headers)
+    currentorgs = json.loads(dashboard.text)
+    orgs = []
+    validjson = __isjson(dashboard.text)
+    if validjson is True:
+        for org in currentorgs:
+            if int(org['id']) == int(targetorg):
+                orgs.append(org['id'])
+                validorg = True
+                return validorg
+            else:
+                pass
+        return validorg
+    else:
+        return None
+
+
+def myorgaccess(apikey):
+    geturl = '{0}/organizations'.format(str(base_url))
+    headers = {
+        'X-Cisco-Meraki-API-Key': format(str(apikey)),
+        'Content-Type': 'application/json'
+    }
+    dashboard = requests.get(geturl, headers=headers)
+
+    #
+    # Check for HTTP 4XX/5XX response code.
+    # If 4XX/5XX response code, print error message with response code and return None from function
+    #
+
+    statuscode = format(str(dashboard.status_code))
+    validjson = __isjson(dashboard.text)
+
+    if statuscode[:1] == '4' or statuscode[:1] == '5':
+        print(
+            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
+    else:
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
+
 
 def getorgdevices(apikey, organizationid):
+
+    """Confirm API Key has Admin Access Otherwise Raise Error"""
+    validorg = __hasorgaccess(apikey, organizationid)
+    if validorg is False:
+        raise OrgPermissionError()
+
     geturl = '{0}/organizations/{1}/inventory'.format(str(base_url), str(organizationid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
@@ -627,12 +707,20 @@ def getorgdevices(apikey, organizationid):
     #
 
     statuscode = format(str(dashboard.status_code))
+    validjson = __isjson(dashboard.text)
+
     if statuscode[:1] == '4' or statuscode[:1] == '5':
         print(
             'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return None
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
     else:
-        return json.loads(dashboard.text)
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
 
 
 def getnetworkdevices(apikey, networkid):
@@ -649,15 +737,29 @@ def getnetworkdevices(apikey, networkid):
     #
 
     statuscode = format(str(dashboard.status_code))
+    validjson = __isjson(dashboard.text)
+
     if statuscode[:1] == '4' or statuscode[:1] == '5':
         print(
             'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return None
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
     else:
-        return json.loads(dashboard.text)
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
 
 
 def getorgadmins(apikey, organizationid):
+
+    """Confirm API Key has Admin Access Otherwise Raise Error"""
+    validorg = __hasorgaccess(apikey, organizationid)
+    if validorg is False:
+        raise OrgPermissionError()
+
     geturl = '{0}/organizations/{1}/admins'.format(str(base_url), str(organizationid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
@@ -671,15 +773,29 @@ def getorgadmins(apikey, organizationid):
     #
 
     statuscode = format(str(dashboard.status_code))
+    validjson = __isjson(dashboard.text)
+
     if statuscode[:1] == '4' or statuscode[:1] == '5':
         print(
             'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return None
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
     else:
-        return json.loads(dashboard.text)
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
 
 
 def getnetworklist(apikey, organizationid):
+
+    """Confirm API Key has Admin Access Otherwise Raise Error"""
+    validorg = __hasorgaccess(apikey, organizationid)
+    if validorg is False:
+        raise OrgPermissionError()
+
     geturl = '{0}/organizations/{1}/networks'.format(str(base_url), str(organizationid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
@@ -693,15 +809,29 @@ def getnetworklist(apikey, organizationid):
     #
 
     statuscode = format(str(dashboard.status_code))
+    validjson = __isjson(dashboard.text)
+
     if statuscode[:1] == '4' or statuscode[:1] == '5':
         print(
             'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return None
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
     else:
-        return json.loads(dashboard.text)
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
 
 
 def getlicensestate(apikey, organizationid):
+
+    """Confirm API Key has Admin Access Otherwise Raise Error"""
+    validorg = __hasorgaccess(apikey, organizationid)
+    if validorg is False:
+        raise OrgPermissionError()
+
     geturl = '{0}/organizations/{1}/licenseState'.format(str(base_url), str(organizationid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
@@ -715,12 +845,20 @@ def getlicensestate(apikey, organizationid):
     #
 
     statuscode = format(str(dashboard.status_code))
+    validjson = __isjson(dashboard.text)
+
     if statuscode[:1] == '4' or statuscode[:1] == '5':
         print(
             'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return None
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
     else:
-        return json.loads(dashboard.text)
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
 
 
 def getdevicedetail(apikey, networkid, serialnumber):
@@ -737,15 +875,29 @@ def getdevicedetail(apikey, networkid, serialnumber):
     #
 
     statuscode = format(str(dashboard.status_code))
+    validjson = __isjson(dashboard.text)
+
     if statuscode[:1] == '4' or statuscode[:1] == '5':
         print(
             'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return None
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
     else:
-        return json.loads(dashboard.text)
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
 
 
 def getnetworkdetail(apikey, networkid):
+
+    """Confirm API Key has Admin Access Otherwise Raise Error"""
+    # validorg = _hasorgaccess(apikey, organizationid)
+    # if validorg is False:
+    #     raise OrgPermissionError()
+
     geturl = '{0}/networks/{1}'.format(str(base_url), str(networkid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
@@ -759,59 +911,29 @@ def getnetworkdetail(apikey, networkid):
     #
 
     statuscode = format(str(dashboard.status_code))
+    validjson = __isjson(dashboard.text)
+
     if statuscode[:1] == '4' or statuscode[:1] == '5':
         print(
             'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return None
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
     else:
-        return json.loads(dashboard.text)
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
 
 
-def getconfigtemplates(apikey, organizationid):
-    geturl = '{0}/organizations/{1}/configTemplates'.format(str(base_url), str(organizationid))
-    headers = {
-        'x-cisco-meraki-api-key': format(str(apikey)),
-        'Content-Type': 'application/json'
-    }
-    dashboard = requests.get(geturl, headers=headers)
+def getnonmerakivpnpeers(apikey, organizationid):
 
-    #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
-    #
+    """Confirm API Key has Admin Access Otherwise Raise Error"""
+    validorg = __hasorgaccess(apikey, organizationid)
+    if validorg is False:
+        raise OrgPermissionError()
 
-    statuscode = format(str(dashboard.status_code))
-    if statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return None
-    else:
-        return json.loads(dashboard.text)
-
-
-def getsnmpsettings(apikey, organizationid):
-    geturl = '{0}/organizations/{1}/snmp'.format(str(base_url), str(organizationid))
-    headers = {
-        'x-cisco-meraki-api-key': format(str(apikey)),
-        'Content-Type': 'application/json'
-    }
-    dashboard = requests.get(geturl, headers=headers)
-
-    #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
-    #
-
-    statuscode = format(str(dashboard.status_code))
-    if statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return None
-    else:
-        return json.loads(dashboard.text)
-
-
-def getvpnpeers(apikey, organizationid):
     geturl = '{0}/organizations/{1}/thirdPartyVPNPeers'.format(str(base_url), str(organizationid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
@@ -825,15 +947,65 @@ def getvpnpeers(apikey, organizationid):
     #
 
     statuscode = format(str(dashboard.status_code))
+    validjson = __isjson(dashboard.text)
+
     if statuscode[:1] == '4' or statuscode[:1] == '5':
         print(
             'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return None
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
     else:
-        return json.loads(dashboard.text)
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
+
+
+def getsnmpsettings(apikey, organizationid):
+
+    """Confirm API Key has Admin Access Otherwise Raise Error"""
+    validorg = __hasorgaccess(apikey, organizationid)
+    if validorg is False:
+        raise OrgPermissionError()
+
+    geturl = '{0}/organizations/{1}/snmp'.format(str(base_url), str(organizationid))
+    headers = {
+        'x-cisco-meraki-api-key': format(str(apikey)),
+        'Content-Type': 'application/json'
+    }
+    dashboard = requests.get(geturl, headers=headers)
+
+    #
+    # Check for HTTP 4XX/5XX response code.
+    # If 4XX/5XX response code, print error message with response code and return None from function
+    #
+
+    statuscode = format(str(dashboard.status_code))
+    validjson = __isjson(dashboard.text)
+
+    if statuscode[:1] == '4' or statuscode[:1] == '5':
+        print(
+            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
+    else:
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
 
 
 def getsamlroles(apikey, organizationid):
+
+    """Confirm API Key has Admin Access Otherwise Raise Error"""
+    validorg = __hasorgaccess(apikey, organizationid)
+    if validorg is False:
+        raise OrgPermissionError()
+
     geturl = '{0}/organizations/{1}/samlRoles'.format(str(base_url), str(organizationid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
@@ -847,12 +1019,20 @@ def getsamlroles(apikey, organizationid):
     #
 
     statuscode = format(str(dashboard.status_code))
+    validjson = __isjson(dashboard.text)
+
     if statuscode[:1] == '4' or statuscode[:1] == '5':
         print(
             'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return None
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
     else:
-        return json.loads(dashboard.text)
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
 
 
 def getswitchstacks(apikey, networkid):
@@ -869,12 +1049,20 @@ def getswitchstacks(apikey, networkid):
     #
 
     statuscode = format(str(dashboard.status_code))
+    validjson = __isjson(dashboard.text)
+
     if statuscode[:1] == '4' or statuscode[:1] == '5':
         print(
             'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return None
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
     else:
-        return json.loads(dashboard.text)
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
 
 
 def getswitchstackmembers(apikey, networkid, stackid):
@@ -891,12 +1079,20 @@ def getswitchstackmembers(apikey, networkid, stackid):
     #
 
     statuscode = format(str(dashboard.status_code))
+    validjson = __isjson(dashboard.text)
+
     if statuscode[:1] == '4' or statuscode[:1] == '5':
         print(
             'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return None
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
     else:
-        return json.loads(dashboard.text)
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
 
 
 def getvlans(apikey, networkid):
@@ -950,6 +1146,12 @@ def getvlandetail(apikey, networkid, vlanid):
 
 
 def gettemplates(apikey, organizationid):
+
+    """Confirm API Key has Admin Access Otherwise Raise Error"""
+    validorg = __hasorgaccess(apikey, organizationid)
+    if validorg is False:
+        raise OrgPermissionError()
+
     geturl = '{0}/organizations/{1}/configTemplates'.format(str(base_url), str(organizationid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
@@ -972,6 +1174,36 @@ def gettemplates(apikey, organizationid):
         return None
     else:
         return json.loads(dashboard.text)
+
+
+def getclients(apikey, serialnum):
+    geturl = '{0}/devices/{1}/clients'.format(str(base_url), str(serialnum))
+    headers = {
+        'x-cisco-meraki-api-key': format(str(apikey)),
+        'Content-Type': 'application/json'
+    }
+    dashboard = requests.get(geturl, headers=headers)
+
+    #
+    # Check for HTTP 4XX/5XX response code.
+    # If 4XX/5XX response code, print error message with response code and return None from function
+    #
+
+    statuscode = format(str(dashboard.status_code))
+    validjson = __isjson(dashboard.text)
+
+    if statuscode[:1] == '4' or statuscode[:1] == '5':
+        print(
+            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
+    else:
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
 
 
 def bindtotemplate(apikey, networkid, templateid, autobind='false'):
@@ -1017,12 +1249,21 @@ def adddevtonet(apikey, networkid, serial):
     #
 
     statuscode = format(str(dashboard.status_code))
+    validjson = __isjson(dashboard.text)
+
     if statuscode[:1] == '4' or statuscode[:1] == '5':
-        print('\nUnable to add device to network using the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return None
+        print('\nUnable to add device to network using the Meraki Dashboard API - HTTP Status Code: {0}'.format(
+            str(statuscode)))
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
     elif statuscode == '200':
         print('Device {0} added to Network ID {1}'.format(str(serial), str(networkid)))
-        return None
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
 
 
 def unbindfromtemplate(apikey, networkid):
@@ -1049,6 +1290,12 @@ def unbindfromtemplate(apikey, networkid):
 
 
 def deltemplate(apikey, organizationid, templateid):
+
+    """Confirm API Key has Admin Access Otherwise Raise Error"""
+    validorg = __hasorgaccess(apikey, organizationid)
+    if validorg is False:
+        raise OrgPermissionError()
+
     delurl = '{0}/organizations/{1}/configTemplates/{2}'.format(str(base_url), str(organizationid), str(templateid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
@@ -1080,7 +1327,7 @@ def deltemplate(apikey, organizationid, templateid):
         return None
 
 
-def updatevlan(apikey, networkid, vlanid, vlanname = None, mxip = None, subnetip = None):
+def updatevlan(apikey, networkid, vlanid, vlanname=None, mxip=None, subnetip=None):
     puturl = '{0}/networks/{1}/vlans/{2}'.format(str(base_url), str(networkid), str(vlanid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
@@ -1106,10 +1353,16 @@ def updatevlan(apikey, networkid, vlanid, vlanname = None, mxip = None, subnetip
     if statuscode[:1] == '4' or statuscode[:1] == '5':
         print(
             'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return None
+        if dashboard.text is not None:
+            return json.loads(dashboard.text)
+        else:
+            return None
     else:
         print('Success - HTTP Status Code: {0}'.format(str(statuscode)))
-        return json.loads(dashboard.text)
+        if dashboard.text is not None:
+            return json.loads(dashboard.text)
+        else:
+            return None
 
 
 def addvlan(apikey, networkid, vlanid, vlanname, mxip, subnetip):
@@ -1180,6 +1433,12 @@ def delvlan(apikey, networkid, vlanid):
 
 def addadmin(apikey, organizationid, email, name, orgaccess=None, tags=None, tagaccess=None, networks=None,
              netaccess=None):
+
+    """Confirm API Key has Admin Access Otherwise Raise Error"""
+    validorg = __hasorgaccess(apikey, organizationid)
+    if validorg is False:
+        raise OrgPermissionError()
+
     posturl = '{0}/organizations/{1}/admins'.format(str(base_url), str(organizationid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
@@ -1296,6 +1555,12 @@ def addadmin(apikey, organizationid, email, name, orgaccess=None, tags=None, tag
 
 
 def deladmin(apikey, organizationid, adminid):
+
+    """Confirm API Key has Admin Access Otherwise Raise Error"""
+    validorg = __hasorgaccess(apikey, organizationid)
+    if validorg is False:
+        raise OrgPermissionError()
+
     delurl = '{0}/organizations/{1}/admins/{2}'.format(str(base_url), str(organizationid), str(adminid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
@@ -1320,29 +1585,13 @@ def deladmin(apikey, organizationid, adminid):
         return None
 
 
-def getadmins(apikey, organizationid):
-    geturl = '{0}/organizations/{1}/admins'.format(str(base_url), str(organizationid))
-    headers = {
-        'x-cisco-meraki-api-key': format(str(apikey)),
-        'Content-Type': 'application/json'
-    }
-    dashboard = requests.get(geturl, headers=headers)
-
-    #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
-    #
-
-    statuscode = format(str(dashboard.status_code))
-    if statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return None
-    else:
-        return json.loads(dashboard.text)
-
-
 def addnetwork(apikey, organizationid, name, nettype, tags, tz):
+
+    """Confirm API Key has Admin Access Otherwise Raise Error"""
+    validorg = __hasorgaccess(apikey, organizationid)
+    if validorg is False:
+        raise OrgPermissionError()
+
     posturl = '{0}/organizations/{1}/networks'.format(str(base_url), str(organizationid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
@@ -1423,6 +1672,11 @@ def delnetwork(apikey, networkid):
 
 def updateadmin(apikey, organizationid, adminid, email, name=None, orgaccess=None, tags=None, tagaccess=None,
                 networks=None, netaccess=None):
+
+    """Confirm API Key has Admin Access Otherwise Raise Error"""
+    validorg = __hasorgaccess(apikey, organizationid)
+    if validorg is False:
+        raise OrgPermissionError()
 
     puturl = '{0}/organizations/{1}/admins/{2}'.format(str(base_url), str(organizationid), str(adminid))
     headers = {
@@ -1564,8 +1818,14 @@ def updateadmin(apikey, organizationid, adminid, email, name=None, orgaccess=Non
         return None
 
 
-def updatenonmerakivpn(apikey, orgid, peername, peerip, secret, remotenets):
-    puturl = '{0}/organizations/{1}/thirdPartyVPNPeers'.format(str(base_url), str(orgid))
+def updatenonmerakivpn(apikey, organizationid, peername, peerip, secret, remotenets):
+
+    """Confirm API Key has Admin Access Otherwise Raise Error"""
+    validorg = __hasorgaccess(apikey, organizationid)
+    if validorg is False:
+        raise OrgPermissionError()
+
+    puturl = '{0}/organizations/{1}/thirdPartyVPNPeers'.format(str(base_url), str(organizationid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -1591,29 +1851,7 @@ def updatenonmerakivpn(apikey, orgid, peername, peerip, secret, remotenets):
     if statuscode[:1] == '4' or statuscode[:1] == '5':
         print(
             'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return None
+        return dashboard.text
     else:
         print(statuscode)
-        return json.loads(dashboard.text)
-
-
-def getnonmerakivpnpeers(apikey, organizationid):
-    geturl = '{0}/organizations/{1}/thirdPartyVPNPeers'.format(str(base_url), str(organizationid))
-    headers = {
-        'x-cisco-meraki-api-key': format(str(apikey)),
-        'Content-Type': 'application/json'
-    }
-    dashboard = requests.get(geturl, headers=headers)
-
-    #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
-    #
-
-    statuscode = format(str(dashboard.status_code))
-    if statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return None
-    else:
         return json.loads(dashboard.text)
