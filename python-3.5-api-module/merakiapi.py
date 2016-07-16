@@ -1,5 +1,6 @@
 #######################################################################################################################
-# Cisco Meraki Provisioning API Python 3.x Module
+#
+#  Cisco Meraki Provisioning API Python 3.x Module
 #
 # Overview
 # The purpose of this Python module is to provide a standard Python module to interact with the Meraki Provisioning API.
@@ -14,6 +15,8 @@
 
 import requests
 import json
+from ipaddress import ip_address
+import re
 
 tzlist = ['Africa/Abidjan',
           'Africa/Accra',
@@ -612,11 +615,20 @@ class Error(Exception):
     """Base module exception."""
     pass
 
+
 class OrgPermissionError(Error):
     """Thrown when supplied API Key does not have access to supplied Organization ID"""
     def __init__(self):
         self.default = 'Invalid Organization ID - Current API Key does not have access to this Organization'
 
+    def __str__(self):
+        return repr(self.default)
+
+
+class EmailFormatError(Error):
+    """Thrown when incorrect email format has been entered"""
+    def __init__(self):
+        self.default = 'Incorrect E-mail Address Format Entered - Must be in the format name@domain.dom'
 
     def __str__(self):
         return repr(self.default)
@@ -626,7 +638,7 @@ def __isjson(myjson):
     """Validates if passed object is a valid JSON Feed, used to prevent json.loads exceptions"""
     try:
         json_object = json.loads(myjson)
-    except ValueError as e:
+    except ValueError:
         return False
     return True
 
@@ -648,13 +660,36 @@ def __hasorgaccess(apikey, targetorg):
         for org in currentorgs:
             if int(org['id']) == int(targetorg):
                 orgs.append(org['id'])
-                validorg = True
-                return validorg
+                return None
             else:
                 pass
-        return validorg
+        raise OrgPermissionError
+
+
+def __validemail(emailaddress):
+    if not re.match(r"[^@]+@[^@]+\.[^@]+", emailaddress):
+        raise EmailFormatError
+
+
+def __validip(ip):
+    try:
+        ip_address(ip)
+    except ValueError:
+        raise ValueError('Invalid IP Address')
+
+
+def __validsubnetip(subnetip):
+    if not re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}[/]\d{1,2}$", subnetip):
+        raise ValueError('Invalid Subnet IP Address - Address must be formatted as #.#.#.#/#')
     else:
-        return None
+        ip, netmask = str.split(subnetip, '/')
+
+    if int(netmask) < 1 or int(netmask) > 30:
+        raise ValueError('Invalid Subnet Mask Length - Must be between 1 and 30')
+    try:
+        ip_address(ip)
+    except ValueError:
+        raise ValueError('Invalid Subnet IP Address')
 
 
 def myorgaccess(apikey):
@@ -690,9 +725,7 @@ def myorgaccess(apikey):
 def getorgdevices(apikey, organizationid):
 
     """Confirm API Key has Admin Access Otherwise Raise Error"""
-    validorg = __hasorgaccess(apikey, organizationid)
-    if validorg is False:
-        raise OrgPermissionError()
+    __hasorgaccess(apikey, organizationid)
 
     geturl = '{0}/organizations/{1}/inventory'.format(str(base_url), str(organizationid))
     headers = {
@@ -756,9 +789,7 @@ def getnetworkdevices(apikey, networkid):
 def getorgadmins(apikey, organizationid):
 
     """Confirm API Key has Admin Access Otherwise Raise Error"""
-    validorg = __hasorgaccess(apikey, organizationid)
-    if validorg is False:
-        raise OrgPermissionError()
+    __hasorgaccess(apikey, organizationid)
 
     geturl = '{0}/organizations/{1}/admins'.format(str(base_url), str(organizationid))
     headers = {
@@ -792,9 +823,7 @@ def getorgadmins(apikey, organizationid):
 def getnetworklist(apikey, organizationid):
 
     """Confirm API Key has Admin Access Otherwise Raise Error"""
-    validorg = __hasorgaccess(apikey, organizationid)
-    if validorg is False:
-        raise OrgPermissionError()
+    __hasorgaccess(apikey, organizationid)
 
     geturl = '{0}/organizations/{1}/networks'.format(str(base_url), str(organizationid))
     headers = {
@@ -828,9 +857,7 @@ def getnetworklist(apikey, organizationid):
 def getlicensestate(apikey, organizationid):
 
     """Confirm API Key has Admin Access Otherwise Raise Error"""
-    validorg = __hasorgaccess(apikey, organizationid)
-    if validorg is False:
-        raise OrgPermissionError()
+    __hasorgaccess(apikey, organizationid)
 
     geturl = '{0}/organizations/{1}/licenseState'.format(str(base_url), str(organizationid))
     headers = {
@@ -893,11 +920,6 @@ def getdevicedetail(apikey, networkid, serialnumber):
 
 def getnetworkdetail(apikey, networkid):
 
-    """Confirm API Key has Admin Access Otherwise Raise Error"""
-    # validorg = _hasorgaccess(apikey, organizationid)
-    # if validorg is False:
-    #     raise OrgPermissionError()
-
     geturl = '{0}/networks/{1}'.format(str(base_url), str(networkid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
@@ -930,9 +952,7 @@ def getnetworkdetail(apikey, networkid):
 def getnonmerakivpnpeers(apikey, organizationid):
 
     """Confirm API Key has Admin Access Otherwise Raise Error"""
-    validorg = __hasorgaccess(apikey, organizationid)
-    if validorg is False:
-        raise OrgPermissionError()
+    __hasorgaccess(apikey, organizationid)
 
     geturl = '{0}/organizations/{1}/thirdPartyVPNPeers'.format(str(base_url), str(organizationid))
     headers = {
@@ -966,9 +986,7 @@ def getnonmerakivpnpeers(apikey, organizationid):
 def getsnmpsettings(apikey, organizationid):
 
     """Confirm API Key has Admin Access Otherwise Raise Error"""
-    validorg = __hasorgaccess(apikey, organizationid)
-    if validorg is False:
-        raise OrgPermissionError()
+    __hasorgaccess(apikey, organizationid)
 
     geturl = '{0}/organizations/{1}/snmp'.format(str(base_url), str(organizationid))
     headers = {
@@ -1002,9 +1020,7 @@ def getsnmpsettings(apikey, organizationid):
 def getsamlroles(apikey, organizationid):
 
     """Confirm API Key has Admin Access Otherwise Raise Error"""
-    validorg = __hasorgaccess(apikey, organizationid)
-    if validorg is False:
-        raise OrgPermissionError()
+    __hasorgaccess(apikey, organizationid)
 
     geturl = '{0}/organizations/{1}/samlRoles'.format(str(base_url), str(organizationid))
     headers = {
@@ -1148,9 +1164,7 @@ def getvlandetail(apikey, networkid, vlanid):
 def gettemplates(apikey, organizationid):
 
     """Confirm API Key has Admin Access Otherwise Raise Error"""
-    validorg = __hasorgaccess(apikey, organizationid)
-    if validorg is False:
-        raise OrgPermissionError()
+    __hasorgaccess(apikey, organizationid)
 
     geturl = '{0}/organizations/{1}/configTemplates'.format(str(base_url), str(organizationid))
     headers = {
@@ -1292,9 +1306,7 @@ def unbindfromtemplate(apikey, networkid):
 def deltemplate(apikey, organizationid, templateid):
 
     """Confirm API Key has Admin Access Otherwise Raise Error"""
-    validorg = __hasorgaccess(apikey, organizationid)
-    if validorg is False:
-        raise OrgPermissionError()
+    __hasorgaccess(apikey, organizationid)
 
     delurl = '{0}/organizations/{1}/configTemplates/{2}'.format(str(base_url), str(organizationid), str(templateid))
     headers = {
@@ -1435,9 +1447,7 @@ def addadmin(apikey, organizationid, email, name, orgaccess=None, tags=None, tag
              netaccess=None):
 
     """Confirm API Key has Admin Access Otherwise Raise Error"""
-    validorg = __hasorgaccess(apikey, organizationid)
-    if validorg is False:
-        raise OrgPermissionError()
+    __hasorgaccess(apikey, organizationid)
 
     posturl = '{0}/organizations/{1}/admins'.format(str(base_url), str(organizationid))
     headers = {
@@ -1557,9 +1567,7 @@ def addadmin(apikey, organizationid, email, name, orgaccess=None, tags=None, tag
 def deladmin(apikey, organizationid, adminid):
 
     """Confirm API Key has Admin Access Otherwise Raise Error"""
-    validorg = __hasorgaccess(apikey, organizationid)
-    if validorg is False:
-        raise OrgPermissionError()
+    __hasorgaccess(apikey, organizationid)
 
     delurl = '{0}/organizations/{1}/admins/{2}'.format(str(base_url), str(organizationid), str(adminid))
     headers = {
@@ -1588,9 +1596,7 @@ def deladmin(apikey, organizationid, adminid):
 def addnetwork(apikey, organizationid, name, nettype, tags, tz):
 
     """Confirm API Key has Admin Access Otherwise Raise Error"""
-    validorg = __hasorgaccess(apikey, organizationid)
-    if validorg is False:
-        raise OrgPermissionError()
+    __hasorgaccess(apikey, organizationid)
 
     posturl = '{0}/organizations/{1}/networks'.format(str(base_url), str(organizationid))
     headers = {
@@ -1674,9 +1680,7 @@ def updateadmin(apikey, organizationid, adminid, email, name=None, orgaccess=Non
                 networks=None, netaccess=None):
 
     """Confirm API Key has Admin Access Otherwise Raise Error"""
-    validorg = __hasorgaccess(apikey, organizationid)
-    if validorg is False:
-        raise OrgPermissionError()
+    __hasorgaccess(apikey, organizationid)
 
     puturl = '{0}/organizations/{1}/admins/{2}'.format(str(base_url), str(organizationid), str(adminid))
     headers = {
@@ -1818,40 +1822,41 @@ def updateadmin(apikey, organizationid, adminid, email, name=None, orgaccess=Non
         return None
 
 
-def updatenonmerakivpn(apikey, organizationid, peername, peerip, secret, remotenets):
+# def updatenonmerakivpn(apikey, organizationid, peernames = [], peerips = [], secrets = [], remotenets = []):
+#
+#     """Confirm API Key has Admin Access Otherwise Raise Error"""
+#     __hasorgaccess(apikey, organizationid)
+#
+#     puturl = '{0}/organizations/{1}/thirdPartyVPNPeers'.format(str(base_url), str(organizationid))
+#     headers = {
+#         'x-cisco-meraki-api-key': format(str(apikey)),
+#         'Content-Type': 'application/json'
+#     }
+#     putdata = [{
+#         "name": peername,
+#         "publicIp": peerip,
+#         "privateSubnets": remotenets,
+#         "secret": secret
+#         }]
+#     putdata = json.dumps(putdata)
+#     print(putdata)
+#     print(puturl)
+#
+#     dashboard = requests.put(puturl, data=putdata, headers=headers)
+#
+#     #
+#     # Check for HTTP 4XX/5XX response code.
+#     # If 4XX/5XX response code, print error message with response code and return None from function
+#     #
+#
+#     statuscode = format(str(dashboard.status_code))
+#     if statuscode[:1] == '4' or statuscode[:1] == '5':
+#         print(
+#             'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
+#         return dashboard.text
+#     else:
+#         print(statuscode)
+#
+#         return json.loads(dashboard.text)
 
-    """Confirm API Key has Admin Access Otherwise Raise Error"""
-    validorg = __hasorgaccess(apikey, organizationid)
-    if validorg is False:
-        raise OrgPermissionError()
 
-    puturl = '{0}/organizations/{1}/thirdPartyVPNPeers'.format(str(base_url), str(organizationid))
-    headers = {
-        'x-cisco-meraki-api-key': format(str(apikey)),
-        'Content-Type': 'application/json'
-    }
-    putdata = {
-        "name": peername,
-        "publicIp": peerip,
-        "privateSubnets": remotenets,
-        "secret": secret
-    }
-    putdata = json.dumps(putdata)
-    print(putdata)
-    print(puturl)
-
-    dashboard = requests.put(puturl, data=putdata, headers=headers)
-
-    #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
-    #
-
-    statuscode = format(str(dashboard.status_code))
-    if statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return dashboard.text
-    else:
-        print(statuscode)
-        return json.loads(dashboard.text)
