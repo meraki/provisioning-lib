@@ -1822,6 +1822,37 @@ def updateadmin(apikey, organizationid, adminid, email, name=None, orgaccess=Non
         return None
 
 
+def getnewvpnsettings(apikey, networkid):
+
+    geturl = '{0}/networks/{1}/newSiteToSiteVpn'.format(str(base_url), str(networkid))
+    headers = {
+        'x-cisco-meraki-api-key': format(str(apikey)),
+        'Content-Type': 'application/json'
+    }
+    dashboard = requests.get(geturl, headers=headers)
+
+    #
+    # Check for HTTP 4XX/5XX response code.
+    # If 4XX/5XX response code, print error message with response code and return None from function
+    #
+
+    statuscode = format(str(dashboard.status_code))
+    validjson = __isjson(dashboard.text)
+
+    if statuscode[:1] == '4' or statuscode[:1] == '5':
+        print(
+            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
+    else:
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
+
+
 # def updatenonmerakivpn(apikey, organizationid, peernames = [], peerips = [], secrets = [], remotenets = []):
 #
 #     """Confirm API Key has Admin Access Otherwise Raise Error"""
