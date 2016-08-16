@@ -17,6 +17,8 @@ import requests
 import json
 from ipaddress import ip_address
 import re
+import warnings
+
 
 tzlist = ['Africa/Abidjan',
           'Africa/Accra',
@@ -612,12 +614,23 @@ base_url = 'https://dashboard.meraki.com/api/v0'
 
 
 class Error(Exception):
-    """Base module exception."""
+    #
+    # Base module exception.
+    #
+    pass
+
+
+class ListLengthWarn(Warning):
+    #
+    # Thrown when zip list lengths mismatch
+    #
     pass
 
 
 class OrgPermissionError(Error):
-    """Thrown when supplied API Key does not have access to supplied Organization ID"""
+    #
+    # Thrown when supplied API Key does not have access to supplied Organization ID
+    #
     def __init__(self):
         self.default = 'Invalid Organization ID - Current API Key does not have access to this Organization'
 
@@ -626,7 +639,9 @@ class OrgPermissionError(Error):
 
 
 class EmailFormatError(Error):
-    """Thrown when incorrect email format has been entered"""
+    #
+    # #Thrown when incorrect email format has been entered
+    #
     def __init__(self):
         self.default = 'Incorrect E-mail Address Format Entered - Must be in the format name@domain.dom'
 
@@ -634,8 +649,46 @@ class EmailFormatError(Error):
         return repr(self.default)
 
 
+class ListError(Error):
+    #
+    # Raised when empty list is passed when required
+    #
+    def __init__(self, message):
+        self.message = message
+
+
+# def __checktype(checklist):
+#     #
+#     # Check that all items passed in a list are of the same type, used for data validation in module
+#     # e.g. all lists, all dicts, all ints, etc.
+#     # If there is a mismatch, return the item number in the list that is the first mismatch
+#     # Only checks for first instance of mismatched type in list
+#     #
+#     valid = True
+#     y = 0
+#
+#     while valid is True and (y + 1) < len(checklist):
+#         print(y, valid)
+#         if type(checklist[y]) == type(checklist[y + 1]):
+#             print(type(checklist[y]), type(checklist[y + 1]))
+#             valid = True
+#             y += 1
+#             print('loop', y, valid)
+#         else:
+#             valid = False
+#
+#     if valid is False:
+#         print("Type Mismatch")
+#         return y, y+1
+#
+#     if valid is True:
+#         return None
+
+
 def __isjson(myjson):
-    """Validates if passed object is a valid JSON Feed, used to prevent json.loads exceptions"""
+    #
+    # Validates if passed object is valid JSON, used to prevent json.loads exceptions
+    #
     try:
         json_object = json.loads(myjson)
     except ValueError:
@@ -643,9 +696,45 @@ def __isjson(myjson):
     return True
 
 
+def __comparelist(list1=None, list2=None, list1name='List 1', list2name='List 2', list1okempty=False,
+                  list2okempty=False):
+    #
+    # Compare the length of two lists and warn if different length or raise error exception if one list is empty and not
+    # allowed to be empty
+    #
+    if list1 is None and list2 is None:
+        warnings.warn('Both {0} and {1} are empty'.format(str(list1name), str(list2name)))
+        return
+
+    elif list1 is None and list1okempty is False:
+        raise ListError('{0} is None, function requires both {1} and {2} to be passed'.format(str(list1name),
+                                                                                              str(list1name),
+                                                                                              str(list2name)))
+    elif list2 is None and list2okempty is False:
+        raise ListError('{0} is None, function requires both {1} and {2} to be passed'.format(str(list1name),
+                                                                                              str(list1name),
+                                                                                              str(list2name)))
+    elif type(list1) is not list or type(list2) is not list:
+        raise ListError('Non-list value passed where list value required')
+
+    if len(list1) < len(list2):
+        warnings.warn('Length of list {0} is longer than list {1}'.format(str(list2name), str(list1name)),
+                      ListLengthWarn)
+        return
+
+    elif len(list2) < len(list1):
+        warnings.warn('Length of list {0} is longer than list {1}'.format(str(list1name), str(list2name)),
+                      ListLengthWarn)
+        return
+
+    else:
+        pass
+
+
 def __hasorgaccess(apikey, targetorg):
-    """Validate if API Key has access to passed Organization ID"""
-    validorg = False
+    #
+    # Validate if API Key has access to passed Organization ID
+    #
     geturl = '{0}/organizations'.format(str(base_url))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
@@ -667,11 +756,17 @@ def __hasorgaccess(apikey, targetorg):
 
 
 def __validemail(emailaddress):
+    #
+    # Validate email address format
+    #
     if not re.match(r"[^@]+@[^@]+\.[^@]+", emailaddress):
         raise EmailFormatError
 
 
 def __validip(ip):
+    #
+    # Validate IP format
+    #
     try:
         ip_address(ip)
     except ValueError:
@@ -679,6 +774,9 @@ def __validip(ip):
 
 
 def __validsubnetip(subnetip):
+    #
+    # Validate correct subnet entry
+    #
     if not re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}[/]\d{1,2}$", subnetip):
         raise ValueError('Invalid Subnet IP Address - Address must be formatted as #.#.#.#/#')
     else:
@@ -693,18 +791,19 @@ def __validsubnetip(subnetip):
 
 
 def myorgaccess(apikey):
+    #
+    # Query Dashboard for OrgID's that API key has access to
+    #
     geturl = '{0}/organizations'.format(str(base_url))
     headers = {
         'X-Cisco-Meraki-API-Key': format(str(apikey)),
         'Content-Type': 'application/json'
     }
     dashboard = requests.get(geturl, headers=headers)
-
     #
     # Check for HTTP 4XX/5XX response code.
     # If 4XX/5XX response code, print error message with response code and return None from function
     #
-
     statuscode = format(str(dashboard.status_code))
     validjson = __isjson(dashboard.text)
 
@@ -722,9 +821,13 @@ def myorgaccess(apikey):
             return None
 
 
-def getorgdevices(apikey, organizationid):
-
-    """Confirm API Key has Admin Access Otherwise Raise Error"""
+def getorginventory(apikey, organizationid):
+    #
+    # Pull organization inventory and return decoded JSON string
+    #
+    #
+    # Confirm API Key has Admin Access Otherwise Raise Error
+    #
     __hasorgaccess(apikey, organizationid)
 
     geturl = '{0}/organizations/{1}/inventory'.format(str(base_url), str(organizationid))
@@ -733,12 +836,10 @@ def getorgdevices(apikey, organizationid):
         'Content-Type': 'application/json'
     }
     dashboard = requests.get(geturl, headers=headers)
-
     #
     # Check for HTTP 4XX/5XX response code.
     # If 4XX/5XX response code, print error message with response code and return None from function
     #
-
     statuscode = format(str(dashboard.status_code))
     validjson = __isjson(dashboard.text)
 
@@ -757,18 +858,19 @@ def getorgdevices(apikey, organizationid):
 
 
 def getnetworkdevices(apikey, networkid):
+    #
+    # Get network inventory and return as decoded JSON string
+    #
     geturl = '{0}/networks/{1}/devices'.format(str(base_url), str(networkid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
     }
     dashboard = requests.get(geturl, headers=headers)
-
     #
     # Check for HTTP 4XX/5XX response code.
     # If 4XX/5XX response code, print error message with response code and return None from function
     #
-
     statuscode = format(str(dashboard.status_code))
     validjson = __isjson(dashboard.text)
 
@@ -787,8 +889,12 @@ def getnetworkdevices(apikey, networkid):
 
 
 def getorgadmins(apikey, organizationid):
-
-    """Confirm API Key has Admin Access Otherwise Raise Error"""
+    #
+    # Get administrators for organization and return decoded JSON string
+    #
+    #
+    # Confirm API Key has Admin Access Otherwise Raise Error
+    #
     __hasorgaccess(apikey, organizationid)
 
     geturl = '{0}/organizations/{1}/admins'.format(str(base_url), str(organizationid))
@@ -822,7 +928,9 @@ def getorgadmins(apikey, organizationid):
 
 def getnetworklist(apikey, organizationid):
 
-    """Confirm API Key has Admin Access Otherwise Raise Error"""
+    #
+    # Confirm API Key has Admin Access Otherwise Raise Error
+    #
     __hasorgaccess(apikey, organizationid)
 
     geturl = '{0}/organizations/{1}/networks'.format(str(base_url), str(organizationid))
@@ -855,8 +963,9 @@ def getnetworklist(apikey, organizationid):
 
 
 def getlicensestate(apikey, organizationid):
-
-    """Confirm API Key has Admin Access Otherwise Raise Error"""
+    #
+    # Confirm API Key has Admin Access Otherwise Raise Error
+    #
     __hasorgaccess(apikey, organizationid)
 
     geturl = '{0}/organizations/{1}/licenseState'.format(str(base_url), str(organizationid))
@@ -950,8 +1059,9 @@ def getnetworkdetail(apikey, networkid):
 
 
 def getnonmerakivpnpeers(apikey, organizationid):
-
-    """Confirm API Key has Admin Access Otherwise Raise Error"""
+    #
+    # Confirm API Key has Admin Access Otherwise Raise Error
+    #
     __hasorgaccess(apikey, organizationid)
 
     geturl = '{0}/organizations/{1}/thirdPartyVPNPeers'.format(str(base_url), str(organizationid))
@@ -984,8 +1094,9 @@ def getnonmerakivpnpeers(apikey, organizationid):
 
 
 def getsnmpsettings(apikey, organizationid):
-
-    """Confirm API Key has Admin Access Otherwise Raise Error"""
+    #
+    # Confirm API Key has Admin Access Otherwise Raise Error
+    #
     __hasorgaccess(apikey, organizationid)
 
     geturl = '{0}/organizations/{1}/snmp'.format(str(base_url), str(organizationid))
@@ -1018,8 +1129,9 @@ def getsnmpsettings(apikey, organizationid):
 
 
 def getsamlroles(apikey, organizationid):
-
-    """Confirm API Key has Admin Access Otherwise Raise Error"""
+    #
+    # Confirm API Key has Admin Access Otherwise Raise Error
+    #
     __hasorgaccess(apikey, organizationid)
 
     geturl = '{0}/organizations/{1}/samlRoles'.format(str(base_url), str(organizationid))
@@ -1162,8 +1274,9 @@ def getvlandetail(apikey, networkid, vlanid):
 
 
 def gettemplates(apikey, organizationid):
-
-    """Confirm API Key has Admin Access Otherwise Raise Error"""
+    #
+    # Confirm API Key has Admin Access Otherwise Raise Error
+    #
     __hasorgaccess(apikey, organizationid)
 
     geturl = '{0}/organizations/{1}/configTemplates'.format(str(base_url), str(organizationid))
@@ -1304,8 +1417,9 @@ def unbindfromtemplate(apikey, networkid):
 
 
 def deltemplate(apikey, organizationid, templateid):
-
-    """Confirm API Key has Admin Access Otherwise Raise Error"""
+    #
+    #Confirm API Key has Admin Access Otherwise Raise Error
+    #
     __hasorgaccess(apikey, organizationid)
 
     delurl = '{0}/organizations/{1}/configTemplates/{2}'.format(str(base_url), str(organizationid), str(templateid))
@@ -1445,8 +1559,9 @@ def delvlan(apikey, networkid, vlanid):
 
 def addadmin(apikey, organizationid, email, name, orgaccess=None, tags=None, tagaccess=None, networks=None,
              netaccess=None):
-
-    """Confirm API Key has Admin Access Otherwise Raise Error"""
+    #
+    # Confirm API Key has Admin Access Otherwise Raise Error
+    #
     __hasorgaccess(apikey, organizationid)
 
     posturl = '{0}/organizations/{1}/admins'.format(str(base_url), str(organizationid))
@@ -1565,8 +1680,9 @@ def addadmin(apikey, organizationid, email, name, orgaccess=None, tags=None, tag
 
 
 def deladmin(apikey, organizationid, adminid):
-
-    """Confirm API Key has Admin Access Otherwise Raise Error"""
+    #
+    # Confirm API Key has Admin Access Otherwise Raise Error
+    #
     __hasorgaccess(apikey, organizationid)
 
     delurl = '{0}/organizations/{1}/admins/{2}'.format(str(base_url), str(organizationid), str(adminid))
@@ -1594,8 +1710,9 @@ def deladmin(apikey, organizationid, adminid):
 
 
 def addnetwork(apikey, organizationid, name, nettype, tags, tz):
-
-    """Confirm API Key has Admin Access Otherwise Raise Error"""
+    #
+    # Confirm API Key has Admin Access Otherwise Raise Error
+    #
     __hasorgaccess(apikey, organizationid)
 
     posturl = '{0}/organizations/{1}/networks'.format(str(base_url), str(organizationid))
@@ -1678,8 +1795,9 @@ def delnetwork(apikey, networkid):
 
 def updateadmin(apikey, organizationid, adminid, email, name=None, orgaccess=None, tags=None, tagaccess=None,
                 networks=None, netaccess=None):
-
-    """Confirm API Key has Admin Access Otherwise Raise Error"""
+    #
+    # Confirm API Key has Admin Access Otherwise Raise Error
+    #
     __hasorgaccess(apikey, organizationid)
 
     puturl = '{0}/organizations/{1}/admins/{2}'.format(str(base_url), str(organizationid), str(adminid))
@@ -1822,9 +1940,9 @@ def updateadmin(apikey, organizationid, adminid, email, name=None, orgaccess=Non
         return None
 
 
-def getnewvpnsettings(apikey, networkid):
+def getvpnsettings(apikey, networkid):
 
-    geturl = '{0}/networks/{1}/newSiteToSiteVpn'.format(str(base_url), str(networkid))
+    geturl = '{0}/networks/{1}/siteToSiteVpn'.format(str(base_url), str(networkid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -1853,41 +1971,126 @@ def getnewvpnsettings(apikey, networkid):
             return None
 
 
-# def updatenonmerakivpn(apikey, organizationid, peernames = [], peerips = [], secrets = [], remotenets = []):
-#
-#     """Confirm API Key has Admin Access Otherwise Raise Error"""
-#     __hasorgaccess(apikey, organizationid)
-#
-#     puturl = '{0}/organizations/{1}/thirdPartyVPNPeers'.format(str(base_url), str(organizationid))
-#     headers = {
-#         'x-cisco-meraki-api-key': format(str(apikey)),
-#         'Content-Type': 'application/json'
-#     }
-#     putdata = [{
-#         "name": peername,
-#         "publicIp": peerip,
-#         "privateSubnets": remotenets,
-#         "secret": secret
-#         }]
-#     putdata = json.dumps(putdata)
-#     print(putdata)
-#     print(puturl)
-#
-#     dashboard = requests.put(puturl, data=putdata, headers=headers)
-#
-#     #
-#     # Check for HTTP 4XX/5XX response code.
-#     # If 4XX/5XX response code, print error message with response code and return None from function
-#     #
-#
-#     statuscode = format(str(dashboard.status_code))
-#     if statuscode[:1] == '4' or statuscode[:1] == '5':
-#         print(
-#             'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-#         return dashboard.text
-#     else:
-#         print(statuscode)
-#
-#         return json.loads(dashboard.text)
+def updatevpnsettings(apikey, networkid, mode='None', subnets=None, usevpn=None, hubnetworks=None, defaultroute=None):
+
+    puturl = '{0}/networks/{1}/siteToSiteVpn'.format(str(base_url), str(networkid))
+    headers = {
+        'x-cisco-meraki-api-key': format(str(apikey)),
+        'Content-Type': 'application/json'
+    }
+    __comparelist(hubnetworks, defaultroute, 'hubnetworks', 'defaultroute', True, True)
+    if hubnetworks is not None and defaultroute is not None:
+        hubmodes = zip(hubnetworks, defaultroute)
+    else:
+        hubmodes = []
+
+    __comparelist(subnets, usevpn, 'subnets', 'usevpn')
+    vpnsubnets = zip(subnets, usevpn)
+
+    hubs = []
+    for h, d in hubmodes:
+        hubs.append({'hubId': h, 'useDefaultRoute': d})
+
+    subnets = []
+    for s, i in vpnsubnets:
+        subnets.append({'localSubnet': s, 'useVpn': i})
+
+    putdata = {'mode': mode, 'hubs': hubs, 'subnets': subnets}
+    print(putdata)
+
+    putdata = json.dumps(putdata)
+    dashboard = requests.put(puturl, data=putdata, headers=headers)
+
+    #
+    # Check for HTTP 4XX/5XX response code.
+    # If 4XX/5XX response code, print error message with response code and return None from function
+    # If HTTP 400 is specifically returned, inform that network is currently bound to a template
+    #
+
+    statuscode = format(str(dashboard.status_code))
+    print(statuscode)
+
+    if dashboard.status_code == 201:
+        print('Changed VPN Settings for Network ID {0}'.format(str(networkid)))
+        validjson = __isjson(dashboard.text)
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
+
+    elif statuscode[:1] == '4' or statuscode[:1] == '5':
+        print('An error has occurred accessing the Meraki Dashboard API check returned data for error details if '
+              'available - HTTP Status Code: {0}'.format(str(statuscode)))
+        validjson = __isjson(dashboard.text)
+        if validjson is True:
+            return json.loads(dashboard.text)
+        else:
+            return None
+
+
+def updatenonmerakivpn(apikey, organizationid, names, ips, secrets, remotenets, tags=None):
+    #
+    # Function to update non-Meraki VPN peer information for an organization.  This function will desctructively
+    # overwrite ALL existing peer information.  If you only wish to add/update an existing peer you must download
+    # all current peer information and make re-upload the modified array of all peers
+    #
+
+    #
+    # Confirm API Key has Admin Access Otherwise Raise Error
+    #
+    __hasorgaccess(apikey, organizationid)
+
+    puturl = '{0}/organizations/{1}/thirdPartyVPNPeers'.format(str(base_url), str(organizationid))
+    headers = {
+        'x-cisco-meraki-api-key': format(str(apikey)),
+        'Content-Type': 'application/json'
+    }
+
+    #
+    # Will only upload peer information if lists are passed to the function, otherwise will fail.  If tags argument is
+    # None will assume all peers should be available to all networks.
+    #
+
+    if isinstance(names, list) and isinstance(ips, list) and isinstance(secrets, list)\
+            and isinstance(remotenets, list) and (tags is None or isinstance(tags, list)):
+        if len(names) + len(ips) + len(secrets) + len(remotenets) / 4 != len(names):
+            warnings.warn('Peers will be added up to the length of the shortest list passed', ListLengthWarn)
+        if tags is None:
+            tags = []
+            for x in names:
+                tags.append(['all'])
+        peerlist = list(zip(names, ips, secrets, remotenets, tags))
+        putdata = []
+        peer = {}
+        for n, i, s, r, t in peerlist:
+            peer['name'] = n
+            peer['publicIp'] = i
+            peer['privateSubnets'] = r
+            peer['secret'] = s
+            peer['tags'] = t
+            print('Peer Value = ', peer.copy())
+            putdata.append((peer.copy()))
+            print('Putdata Value = ', putdata)
+            peer.clear()
+    else:
+        raise TypeError('All peer arguments must be passed as lists')
+
+    putdata = json.dumps(putdata)
+    dashboard = requests.put(puturl, data=putdata, headers=headers)
+
+    #
+    # Check for HTTP 4XX/5XX response code.
+    # If 4XX/5XX response code, print error message with response code and return None from function
+    #
+
+    statuscode = format(str(dashboard.status_code))
+    if statuscode[:1] == '4' or statuscode[:1] == '5':
+        print(
+            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
+        return dashboard.text
+    else:
+        print(statuscode)
+
+        return json.loads(dashboard.text)
 
 
