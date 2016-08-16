@@ -2068,9 +2068,7 @@ def updatenonmerakivpn(apikey, organizationid, names, ips, secrets, remotenets, 
             peer['privateSubnets'] = r
             peer['secret'] = s
             peer['tags'] = t
-            print('Peer Value = ', peer.copy())
             putdata.append((peer.copy()))
-            print('Putdata Value = ', putdata)
             peer.clear()
     else:
         raise TypeError('All peer arguments must be passed as lists')
