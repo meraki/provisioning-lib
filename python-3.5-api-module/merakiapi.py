@@ -657,34 +657,6 @@ class ListError(Error):
         self.message = message
 
 
-# def __checktype(checklist):
-#     #
-#     # Check that all items passed in a list are of the same type, used for data validation in module
-#     # e.g. all lists, all dicts, all ints, etc.
-#     # If there is a mismatch, return the item number in the list that is the first mismatch
-#     # Only checks for first instance of mismatched type in list
-#     #
-#     valid = True
-#     y = 0
-#
-#     while valid is True and (y + 1) < len(checklist):
-#         print(y, valid)
-#         if type(checklist[y]) == type(checklist[y + 1]):
-#             print(type(checklist[y]), type(checklist[y + 1]))
-#             valid = True
-#             y += 1
-#             print('loop', y, valid)
-#         else:
-#             valid = False
-#
-#     if valid is False:
-#         print("Type Mismatch")
-#         return y, y+1
-#
-#     if valid is True:
-#         return None
-
-
 def __isjson(myjson):
     #
     # Validates if passed object is valid JSON, used to prevent json.loads exceptions
@@ -696,39 +668,16 @@ def __isjson(myjson):
     return True
 
 
-def __comparelist(list1=None, list2=None, list1name='List 1', list2name='List 2', list1okempty=False,
-                  list2okempty=False):
+def __comparelist(*args):
     #
-    # Compare the length of two lists and warn if different length or raise error exception if one list is empty and not
-    # allowed to be empty
+    # Compare length of multiple list arguments passed to function and exception if any are none and warn if any are
+    # different in length the first list passed
     #
-    if list1 is None and list2 is None:
-        warnings.warn('Both {0} and {1} are empty'.format(str(list1name), str(list2name)))
-        return
-
-    elif list1 is None and list1okempty is False:
-        raise ListError('{0} is None, function requires both {1} and {2} to be passed'.format(str(list1name),
-                                                                                              str(list1name),
-                                                                                              str(list2name)))
-    elif list2 is None and list2okempty is False:
-        raise ListError('{0} is None, function requires both {1} and {2} to be passed'.format(str(list1name),
-                                                                                              str(list1name),
-                                                                                              str(list2name)))
-    elif type(list1) is not list or type(list2) is not list:
-        raise ListError('Non-list value passed where list value required')
-
-    if len(list1) < len(list2):
-        warnings.warn('Length of list {0} is longer than list {1}'.format(str(list2name), str(list1name)),
-                      ListLengthWarn)
-        return
-
-    elif len(list2) < len(list1):
-        warnings.warn('Length of list {0} is longer than list {1}'.format(str(list1name), str(list2name)),
-                      ListLengthWarn)
-        return
-
-    else:
-        pass
+    length = len(args[0])
+    if any(lst is None for lst in args):
+        raise ListError('Empty list passed to function')
+    if any(len(lst) != length for lst in args):
+        warnings.warn('All lists are not of equal length', ListLengthWarn)
 
 
 def __hasorgaccess(apikey, targetorg):
@@ -778,22 +727,81 @@ def __validsubnetip(subnetip):
     # Validate correct subnet entry
     #
     if not re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}[/]\d{1,2}$", subnetip):
-        raise ValueError('Invalid Subnet IP Address - Address must be formatted as #.#.#.#/#')
+        raise ValueError('Invalid Subnet IP Address {0} - Address must be formatted as #.#.#.#/#'.format(str(subnetip)))
     else:
         ip, netmask = str.split(subnetip, '/')
 
     if int(netmask) < 1 or int(netmask) > 30:
-        raise ValueError('Invalid Subnet Mask Length - Must be between 1 and 30')
+        raise ValueError('Invalid Subnet Mask Length {0} - Must be between 1 and 30'.format(str(subnetip)))
     try:
         ip_address(ip)
     except ValueError:
-        raise ValueError('Invalid Subnet IP Address')
+        raise ValueError('Invalid Subnet IP Address {0}'.format(str(subnetip)))
+
+
+def __returnhandler(statuscode, returntext, objtype):
+    #
+    # Parses Dashboard return information and returns error data based on status code and error JSON
+    #
+
+    validreturn = __isjson(returntext)
+    noerr = False
+    errmesg = ''
+
+    if validreturn:
+        returntext = json.loads(returntext)
+
+        try:
+            errmesg = returntext['errors']
+        except KeyError:
+            noerr = True
+        except TypeError:
+            noerr = True
+
+    if str(statuscode) == '200' and validreturn:
+        print('{0} Operation Successful - See returned data for results\n'.format(str(objtype)))
+        return returntext
+    elif str(statuscode) == '200':
+        print('{0} Operation Successful\n'.format(str(objtype)))
+        return None
+    elif str(statuscode) == '201' and validreturn:
+        print('{0} Added Successfully - See returned data for results\n'.format(str(objtype)))
+        return returntext
+    elif str(statuscode) == '201':
+        print('{0} Added Successfully\n'.format(str(objtype)))
+        return None
+    elif str(statuscode) == '204' and validreturn:
+        print('{0} Deleted Successfully - See returned data for results\n'.format(str(objtype)))
+        return returntext
+    elif str(statuscode) == '204':
+        print('{0} Deleted Successfully\n'.format(str(objtype)))
+        return None
+    elif str(statuscode) == '400' and validreturn and noerr is False:
+        print('Bad Request - See returned data for error details\n')
+        return errmesg
+    elif str(statuscode) == '400' and validreturn and noerr:
+        print('Bad Request - See returned data for details\n')
+        return returntext
+    elif str(statuscode) == '400':
+        print('Bad Request - No additional error data available\n')
+    elif str(statuscode) == '401' and validreturn and noerr is False:
+        print('Unauthorized Access - See returned data for error details\n')
+        return errmesg
+    elif str(statuscode) == '401' and validreturn:
+        print('Unauthorized Access')
+        return returntext
+    elif validreturn and noerr is False:
+        print('HTTP Status Code: {0} - See returned data for error details\n'.format(str(statuscode)))
+        return errmesg
+    else:
+        print('HTTP Status Code: {0} - No returned data\n'.format(str(statuscode)))
 
 
 def myorgaccess(apikey):
     #
     # Query Dashboard for OrgID's that API key has access to
     #
+    calltype = 'Organization'
     geturl = '{0}/organizations'.format(str(base_url))
     headers = {
         'X-Cisco-Meraki-API-Key': format(str(apikey)),
@@ -801,24 +809,10 @@ def myorgaccess(apikey):
     }
     dashboard = requests.get(geturl, headers=headers)
     #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
+    # Call return handler function to parse Dashboard response
     #
-    statuscode = format(str(dashboard.status_code))
-    validjson = __isjson(dashboard.text)
-
-    if statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
-    else:
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
 
 def getorginventory(apikey, organizationid):
@@ -829,6 +823,7 @@ def getorginventory(apikey, organizationid):
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
     __hasorgaccess(apikey, organizationid)
+    calltype = 'Inventory'
 
     geturl = '{0}/organizations/{1}/inventory'.format(str(base_url), str(organizationid))
     headers = {
@@ -837,30 +832,17 @@ def getorginventory(apikey, organizationid):
     }
     dashboard = requests.get(geturl, headers=headers)
     #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
+    # Call return handler function to parse Dashboard response
     #
-    statuscode = format(str(dashboard.status_code))
-    validjson = __isjson(dashboard.text)
-
-    if statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
-    else:
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
 
 def getnetworkdevices(apikey, networkid):
     #
     # Get network inventory and return as decoded JSON string
     #
+    calltype = 'Network'
     geturl = '{0}/networks/{1}/devices'.format(str(base_url), str(networkid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
@@ -868,24 +850,10 @@ def getnetworkdevices(apikey, networkid):
     }
     dashboard = requests.get(geturl, headers=headers)
     #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
+    # Call return handler function to parse Dashboard response
     #
-    statuscode = format(str(dashboard.status_code))
-    validjson = __isjson(dashboard.text)
-
-    if statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
-    else:
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
 
 def getorgadmins(apikey, organizationid):
@@ -896,6 +864,7 @@ def getorgadmins(apikey, organizationid):
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
     __hasorgaccess(apikey, organizationid)
+    calltype = 'Organization'
 
     geturl = '{0}/organizations/{1}/admins'.format(str(base_url), str(organizationid))
     headers = {
@@ -903,35 +872,19 @@ def getorgadmins(apikey, organizationid):
         'Content-Type': 'application/json'
     }
     dashboard = requests.get(geturl, headers=headers)
-
     #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
+    # Call return handler function to parse Dashboard response
     #
-
-    statuscode = format(str(dashboard.status_code))
-    validjson = __isjson(dashboard.text)
-
-    if statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
-    else:
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
 
 def getnetworklist(apikey, organizationid):
-
     #
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
     __hasorgaccess(apikey, organizationid)
+    calltype = 'Network'
 
     geturl = '{0}/organizations/{1}/networks'.format(str(base_url), str(organizationid))
     headers = {
@@ -939,27 +892,11 @@ def getnetworklist(apikey, organizationid):
         'Content-Type': 'application/json'
     }
     dashboard = requests.get(geturl, headers=headers)
-
     #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
+    # Call return handler function to parse Dashboard response
     #
-
-    statuscode = format(str(dashboard.status_code))
-    validjson = __isjson(dashboard.text)
-
-    if statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
-    else:
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
 
 def getlicensestate(apikey, organizationid):
@@ -967,6 +904,7 @@ def getlicensestate(apikey, organizationid):
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
     __hasorgaccess(apikey, organizationid)
+    calltype = 'License'
 
     geturl = '{0}/organizations/{1}/licenseState'.format(str(base_url), str(organizationid))
     headers = {
@@ -974,88 +912,44 @@ def getlicensestate(apikey, organizationid):
         'Content-Type': 'application/json'
     }
     dashboard = requests.get(geturl, headers=headers)
-
     #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
+    # Call return handler function to parse Dashboard response
     #
-
-    statuscode = format(str(dashboard.status_code))
-    validjson = __isjson(dashboard.text)
-
-    if statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
-    else:
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
 
 def getdevicedetail(apikey, networkid, serialnumber):
+
+    calltype = 'Device Detail'
     geturl = '{0}/networks/{1}/devices/{2}'.format(str(base_url), str(networkid), str(serialnumber))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
     }
+
     dashboard = requests.get(geturl, headers=headers)
-
     #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
+    # Call return handler function to parse Dashboard response
     #
-
-    statuscode = format(str(dashboard.status_code))
-    validjson = __isjson(dashboard.text)
-
-    if statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
-    else:
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
 
 def getnetworkdetail(apikey, networkid):
 
+    calltype = 'Network Detail'
     geturl = '{0}/networks/{1}'.format(str(base_url), str(networkid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
     }
     dashboard = requests.get(geturl, headers=headers)
-
     #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
+    # Call return handler function to parse Dashboard response
     #
-
-    statuscode = format(str(dashboard.status_code))
-    validjson = __isjson(dashboard.text)
-
-    if statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
-    else:
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
 
 def getnonmerakivpnpeers(apikey, organizationid):
@@ -1063,6 +957,7 @@ def getnonmerakivpnpeers(apikey, organizationid):
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
     __hasorgaccess(apikey, organizationid)
+    calltype = 'None-Meraki VPN Peer'
 
     geturl = '{0}/organizations/{1}/thirdPartyVPNPeers'.format(str(base_url), str(organizationid))
     headers = {
@@ -1070,27 +965,11 @@ def getnonmerakivpnpeers(apikey, organizationid):
         'Content-Type': 'application/json'
     }
     dashboard = requests.get(geturl, headers=headers)
-
     #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
+    # Call return handler function to parse Dashboard response
     #
-
-    statuscode = format(str(dashboard.status_code))
-    validjson = __isjson(dashboard.text)
-
-    if statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
-    else:
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
 
 def getsnmpsettings(apikey, organizationid):
@@ -1098,6 +977,7 @@ def getsnmpsettings(apikey, organizationid):
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
     __hasorgaccess(apikey, organizationid)
+    calltype = 'SNMP Settings'
 
     geturl = '{0}/organizations/{1}/snmp'.format(str(base_url), str(organizationid))
     headers = {
@@ -1105,27 +985,11 @@ def getsnmpsettings(apikey, organizationid):
         'Content-Type': 'application/json'
     }
     dashboard = requests.get(geturl, headers=headers)
-
     #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
+    # Call return handler function to parse Dashboard response
     #
-
-    statuscode = format(str(dashboard.status_code))
-    validjson = __isjson(dashboard.text)
-
-    if statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
-    else:
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
 
 def getsamlroles(apikey, organizationid):
@@ -1133,6 +997,7 @@ def getsamlroles(apikey, organizationid):
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
     __hasorgaccess(apikey, organizationid)
+    calltype = 'SAML Roles'
 
     geturl = '{0}/organizations/{1}/samlRoles'.format(str(base_url), str(organizationid))
     headers = {
@@ -1140,137 +1005,71 @@ def getsamlroles(apikey, organizationid):
         'Content-Type': 'application/json'
     }
     dashboard = requests.get(geturl, headers=headers)
-
     #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
+    # Call return handler function to parse Dashboard response
     #
-
-    statuscode = format(str(dashboard.status_code))
-    validjson = __isjson(dashboard.text)
-
-    if statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
-    else:
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
 
 def getswitchstacks(apikey, networkid):
+    calltype = 'Switch Stacks'
     geturl = '{0}/networks/{1}/switchStacks'.format(str(base_url), str(networkid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
     }
     dashboard = requests.get(geturl, headers=headers)
-
     #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
+    # Call return handler function to parse Dashboard response
     #
-
-    statuscode = format(str(dashboard.status_code))
-    validjson = __isjson(dashboard.text)
-
-    if statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
-    else:
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
 
 def getswitchstackmembers(apikey, networkid, stackid):
+    calltype = 'Switch Stack Members'
     geturl = '{0}/networks/{1}/switchStacks/{2}'.format(str(base_url), str(networkid), str(stackid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
     }
     dashboard = requests.get(geturl, headers=headers)
-
     #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
+    # Call return handler function to parse Dashboard response
     #
-
-    statuscode = format(str(dashboard.status_code))
-    validjson = __isjson(dashboard.text)
-
-    if statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
-    else:
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
 
 def getvlans(apikey, networkid):
+    calltype = 'VLANs'
     geturl = '{0}/networks/{1}/vlans'.format(str(base_url), str(networkid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
     }
     dashboard = requests.get(geturl, headers=headers)
-
     #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
+    # Call return handler function to parse Dashboard response
     #
-
-    statuscode = format(str(dashboard.status_code))
-    if dashboard.status_code == 400:
-        print('Network ID {0} does not contain a MX device'.format(str(networkid)))
-        return None
-    elif statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return None
-    else:
-        return json.loads(dashboard.text)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
 
 def getvlandetail(apikey, networkid, vlanid):
+    calltype = 'VLAN Detail'
     geturl = '{0}/networks/{1}/vlans/{2}'.format(str(base_url), str(networkid), str(vlanid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
     }
     dashboard = requests.get(geturl, headers=headers)
-
     #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
+    # Call return handler function to parse Dashboard response
     #
-
-    statuscode = format(str(dashboard.status_code))
-    if dashboard.status_code == 400:
-        print('Network ID {0} does not contain a MX device'.format(str(networkid)))
-        return None
-    elif statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return None
-    else:
-        return json.loads(dashboard.text)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
 
 def gettemplates(apikey, organizationid):
@@ -1278,6 +1077,7 @@ def gettemplates(apikey, organizationid):
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
     __hasorgaccess(apikey, organizationid)
+    calltype = 'Templates'
 
     geturl = '{0}/organizations/{1}/configTemplates'.format(str(base_url), str(organizationid))
     headers = {
@@ -1285,55 +1085,30 @@ def gettemplates(apikey, organizationid):
         'Content-Type': 'application/json'
     }
     dashboard = requests.get(geturl, headers=headers)
-
     #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
+    # Call return handler function to parse Dashboard response
     #
-
-    statuscode = format(str(dashboard.status_code))
-    if dashboard.status_code == 400:
-        print('Organization ID {0} does not contain any defined templates'.format(str(organizationid)))
-        return None
-    elif statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return None
-    else:
-        return json.loads(dashboard.text)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
 
 def getclients(apikey, serialnum):
+    calltype = 'Clients'
     geturl = '{0}/devices/{1}/clients'.format(str(base_url), str(serialnum))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
     }
     dashboard = requests.get(geturl, headers=headers)
-
     #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
+    # Call return handler function to parse Dashboard response
     #
-
-    statuscode = format(str(dashboard.status_code))
-    validjson = __isjson(dashboard.text)
-
-    if statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
-    else:
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
 
 def bindtotemplate(apikey, networkid, templateid, autobind='false'):
+    calltype = 'Template Bind'
     posturl = '{0}/networks/{1}/bind'.format(str(base_url), str(networkid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
@@ -1344,22 +1119,15 @@ def bindtotemplate(apikey, networkid, templateid, autobind='false'):
         'autobind': format(str(autobind))
     }
     dashboard = requests.post(posturl, data=json.dumps(putdata), headers=headers)
-
     #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
+    # Call return handler function to parse Dashboard response
     #
-
-    statuscode = format(str(dashboard.status_code))
-    if statuscode[:1] == '4' or statuscode[:1] == '5':
-        print('\nUnable to bind network using the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return None
-    elif statuscode == '200':
-        print('Network ID {0} bound to configuration template ID {1}'.format(str(networkid), str(templateid)))
-        return None
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
 
 def adddevtonet(apikey, networkid, serial):
+    calltype = 'Assign Device'
     posturl = '{0}/networks/{1}/devices/claim'.format(str(base_url), str(networkid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
@@ -1369,58 +1137,34 @@ def adddevtonet(apikey, networkid, serial):
         'serial': format(str(serial))
     }
     dashboard = requests.post(posturl, data=json.dumps(postdata), headers=headers)
-
     #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
+    # Call return handler function to parse Dashboard response
     #
-
-    statuscode = format(str(dashboard.status_code))
-    validjson = __isjson(dashboard.text)
-
-    if statuscode[:1] == '4' or statuscode[:1] == '5':
-        print('\nUnable to add device to network using the Meraki Dashboard API - HTTP Status Code: {0}'.format(
-            str(statuscode)))
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
-    elif statuscode == '200':
-        print('Device {0} added to Network ID {1}'.format(str(serial), str(networkid)))
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
 
 def unbindfromtemplate(apikey, networkid):
+    calltype = 'Network Unbind'
     posturl = '{0}/networks/{1}/unbind'.format(str(base_url), str(networkid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
     }
     dashboard = requests.post(posturl, headers=headers)
-
     #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
+    # Call return handler function to parse Dashboard response
     #
-
-    statuscode = format(str(dashboard.status_code))
-    if statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return None
-    elif statuscode == '200':
-        print('Network ID {0} unbound from configuration template'.format(str(networkid)))
-        return None
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
 
 def deltemplate(apikey, organizationid, templateid):
     #
-    #Confirm API Key has Admin Access Otherwise Raise Error
+    # Confirm API Key has Admin Access Otherwise Raise Error
     #
     __hasorgaccess(apikey, organizationid)
+    calltype = 'Template Delete'
 
     delurl = '{0}/organizations/{1}/configTemplates/{2}'.format(str(base_url), str(organizationid), str(templateid))
     headers = {
@@ -1428,32 +1172,15 @@ def deltemplate(apikey, organizationid, templateid):
         'Content-Type': 'application/json'
     }
     dashboard = requests.delete(delurl, headers=headers)
-
     #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
-    # If HTTP 404 is specifically returned, inform that configuration template does not exist
+    # Call return handler function to parse Dashboard response
     #
-
-    statuscode = format(str(dashboard.status_code))
-
-    if dashboard.status_code == 204:
-        print('Deleted template {0} from Organization ID {1}'.format(str(templateid), str(organizationid)))
-        return None
-    elif dashboard.status_code == 404:
-        print('Configuration Template ID {0} cannot be found, please confirm ID'.format(str(templateid)))
-        return None
-    elif statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return None
-    else:
-        print('Deletion of Template ID {0} unsuccessful - HTTP Status Code: {1}'.format(str(templateid),
-                                                                                        str(statuscode)))
-        return None
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
 
 def updatevlan(apikey, networkid, vlanid, vlanname=None, mxip=None, subnetip=None):
+    calltype = 'VLAN Update'
     puturl = '{0}/networks/{1}/vlans/{2}'.format(str(base_url), str(networkid), str(vlanid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
@@ -1469,29 +1196,15 @@ def updatevlan(apikey, networkid, vlanid, vlanname=None, mxip=None, subnetip=Non
 
     putdata = json.dumps(putdata)
     dashboard = requests.put(puturl, data=putdata, headers=headers)
-
     #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
+    # Call return handler function to parse Dashboard response
     #
-
-    statuscode = format(str(dashboard.status_code))
-    if statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        if dashboard.text is not None:
-            return json.loads(dashboard.text)
-        else:
-            return None
-    else:
-        print('Success - HTTP Status Code: {0}'.format(str(statuscode)))
-        if dashboard.text is not None:
-            return json.loads(dashboard.text)
-        else:
-            return None
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
 
 def addvlan(apikey, networkid, vlanid, vlanname, mxip, subnetip):
+    calltype = 'VLAN Add'
     posturl = '{0}/networks/{1}/vlans'.format(str(base_url), str(networkid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
@@ -1505,56 +1218,26 @@ def addvlan(apikey, networkid, vlanid, vlanname, mxip, subnetip):
     }
     postdata = json.dumps(postdata)
     dashboard = requests.post(posturl, data=postdata, headers=headers)
-
     #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
-    # If HTTP 400 is specifically returned, inform that network is currently bound to a template
+    # Call return handler function to parse Dashboard response
     #
-
-    statuscode = format(str(dashboard.status_code))
-
-    if dashboard.status_code == 201:
-        print('Added VLAN {0} to MX'.format(str(vlanid)))
-        return None
-    elif dashboard.status_code == 400:
-        print('Network is bound to a template - Unable to delete VLAN')
-        return None
-    elif statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return None
-    else:
-        print(statuscode)
-        return None
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
 
 def delvlan(apikey, networkid, vlanid):
+    calltype = 'VLAN Delete'
     delurl = '{0}/networks/{1}/vlans/{2}'.format(str(base_url), str(networkid), str(vlanid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
     }
     dashboard = requests.delete(delurl, headers=headers)
-
     #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
-    # If HTTP 400 is specifically returned, inform that network is currently bound to a template
+    # Call return handler function to parse Dashboard response
     #
-
-    statuscode = format(str(dashboard.status_code))
-
-    if dashboard.status_code == 204:
-        print('Deleted VLAN {0} from MX'.format(str(vlanid)))
-        return None
-    elif dashboard.status_code == 400:
-        print('Network is bound to a template - Unable to delete VLAN')
-        return None
-    elif statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return None
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
 
 def addadmin(apikey, organizationid, email, name, orgaccess=None, tags=None, tagaccess=None, networks=None,
@@ -1563,6 +1246,7 @@ def addadmin(apikey, organizationid, email, name, orgaccess=None, tags=None, tag
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
     __hasorgaccess(apikey, organizationid)
+    calltype = 'Add Administrator'
 
     posturl = '{0}/organizations/{1}/admins'.format(str(base_url), str(organizationid))
     headers = {
@@ -1657,26 +1341,10 @@ def addadmin(apikey, organizationid, email, name, orgaccess=None, tags=None, tag
         }
     dashboard = requests.post(posturl, data=json.dumps(postdata), headers=headers)
     #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
-    # If HTTP 400 is specifically returned, inform that network is currently bound to a template
+    # Call return handler function to parse Dashboard response
     #
-
-    statuscode = format(str(dashboard.status_code))
-
-    if dashboard.status_code == 201:
-        print('Added Administrator {0} to Organization ID {1}'.format(str(email), str(organizationid)))
-        return None
-    elif dashboard.status_code == 400:
-        print('Unable to add administrator')
-        return None
-    elif statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return None
-    else:
-        print(statuscode)
-        return None
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
 
 def deladmin(apikey, organizationid, adminid):
@@ -1684,6 +1352,7 @@ def deladmin(apikey, organizationid, adminid):
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
     __hasorgaccess(apikey, organizationid)
+    calltype = 'Delete Administrator'
 
     delurl = '{0}/organizations/{1}/admins/{2}'.format(str(base_url), str(organizationid), str(adminid))
     headers = {
@@ -1691,22 +1360,11 @@ def deladmin(apikey, organizationid, adminid):
         'Content-Type': 'application/json'
     }
     dashboard = requests.delete(delurl, headers=headers)
-
     #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
-    # If HTTP 400 is specifically returned, inform that network is currently bound to a template
+    # Call return handler function to parse Dashboard response
     #
-
-    statuscode = format(str(dashboard.status_code))
-
-    if dashboard.status_code == 204:
-        print('Deleted Admin ID {0} from Organization ID {1}'.format(str(adminid), str(organizationid)))
-        return None
-    elif statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return None
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
 
 def addnetwork(apikey, organizationid, name, nettype, tags, tz):
@@ -1714,6 +1372,7 @@ def addnetwork(apikey, organizationid, name, nettype, tags, tz):
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
     __hasorgaccess(apikey, organizationid)
+    calltype = 'Add Network'
 
     posturl = '{0}/organizations/{1}/networks'.format(str(base_url), str(organizationid))
     headers = {
@@ -1741,56 +1400,26 @@ def addnetwork(apikey, organizationid, name, nettype, tags, tz):
     }
     postdata = json.dumps(postdata)
     dashboard = requests.post(posturl, data=postdata, headers=headers)
-
     #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
-    # If HTTP 400 is specifically returned, inform that network is currently bound to a template
+    # Call return handler function to parse Dashboard response
     #
-
-    statuscode = format(str(dashboard.status_code))
-
-    if dashboard.status_code == 201:
-        print('Added Network {0} to Organization'.format(str(name)))
-        return json.loads(dashboard.text)
-    elif dashboard.status_code == 400:
-        print('A network with the name "{0}" already exists in the organization'.format(str(name)))
-        return None
-    elif statuscode[:1] == '4' or statuscode[:1] == '5':
-        print('An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'
-              .format(str(statuscode)))
-        return None
-    else:
-        print('Unknown error - HTTP Status Code {0}'.format(str(statuscode)))
-        return None
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
 
 def delnetwork(apikey, networkid):
+    calltype = 'Delete Network'
     delurl = '{0}/networks/{1}'.format(str(base_url), str(networkid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
     }
     dashboard = requests.delete(delurl, headers=headers)
-
     #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
-    # If HTTP 400 is specifically returned, inform that network is currently bound to a template
+    # Call return handler function to parse Dashboard response
     #
-
-    statuscode = format(str(dashboard.status_code))
-
-    if dashboard.status_code == 204:
-        print('Deleted Network ID {0} from Organization'.format(str(networkid)))
-        return None
-    elif dashboard.status_code == 404:
-        print('Network ID {0} does not exist, please enter a valid network ID')
-        return None
-    elif statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return None
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
 
 def updateadmin(apikey, organizationid, adminid, email, name=None, orgaccess=None, tags=None, tagaccess=None,
@@ -1799,6 +1428,7 @@ def updateadmin(apikey, organizationid, adminid, email, name=None, orgaccess=Non
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
     __hasorgaccess(apikey, organizationid)
+    calltype = 'Update Administrator'
 
     puturl = '{0}/organizations/{1}/admins/{2}'.format(str(base_url), str(organizationid), str(adminid))
     headers = {
@@ -1861,6 +1491,7 @@ def updateadmin(apikey, organizationid, adminid, email, name=None, orgaccess=Non
     else:
         pass
     putdata = []
+
     if name is not None:
         if len(puttags) == 0 and len(putnets) == 0:
             putdata = {
@@ -1893,6 +1524,7 @@ def updateadmin(apikey, organizationid, adminid, email, name=None, orgaccess=Non
                 'tags': puttags,
                 'networks': putnets
                 }
+
     elif name is None:
         if len(puttags) > 0 and len(putnets) == 0:
             putdata = {
@@ -1915,64 +1547,32 @@ def updateadmin(apikey, organizationid, adminid, email, name=None, orgaccess=Non
                 'tags': puttags,
                 'networks': putnets
                 }
-    print(puturl, putdata)
+
     dashboard = requests.put(puturl, data=json.dumps(putdata), headers=headers)
-#
-# Check for HTTP 4XX/5XX response code.
-# If 4XX/5XX response code, print error message with response code and return None from function
-# If HTTP 400 is specifically returned, inform that network is currently bound to a template
-#
-
-    statuscode = format(str(dashboard.status_code))
-
-    if dashboard.status_code == 200:
-        print('Successfully modified Administrator {0} in Organization ID {1}'.format(str(email), str(organizationid)))
-        return None
-    elif dashboard.status_code == 400:
-        print('Unable to modify Administrator')
-        return None
-    elif statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return None
-    else:
-        print(statuscode)
-        return None
+    #
+    # Call return handler function to parse Dashboard response
+    #
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
 
 def getvpnsettings(apikey, networkid):
-
+    calltype = 'Get AutoVPN Settings'
     geturl = '{0}/networks/{1}/siteToSiteVpn'.format(str(base_url), str(networkid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
     }
     dashboard = requests.get(geturl, headers=headers)
-
     #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
+    # Call return handler function to parse Dashboard response
     #
-
-    statuscode = format(str(dashboard.status_code))
-    validjson = __isjson(dashboard.text)
-
-    if statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
-    else:
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
 
 def updatevpnsettings(apikey, networkid, mode='None', subnets=None, usevpn=None, hubnetworks=None, defaultroute=None):
-
+    calltype = 'Update AutoVPN Settings'
     puturl = '{0}/networks/{1}/siteToSiteVpn'.format(str(base_url), str(networkid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
@@ -1984,8 +1584,8 @@ def updatevpnsettings(apikey, networkid, mode='None', subnets=None, usevpn=None,
     else:
         hubmodes = []
 
-    __comparelist(subnets, usevpn, 'subnets', 'usevpn')
-    vpnsubnets = zip(subnets, usevpn)
+    __comparelist(subnets, usevpn)
+    vpnsubnets = list(zip(subnets, usevpn))
 
     hubs = []
     for h, d in hubmodes:
@@ -1993,6 +1593,7 @@ def updatevpnsettings(apikey, networkid, mode='None', subnets=None, usevpn=None,
 
     subnets = []
     for s, i in vpnsubnets:
+        __validsubnetip(s)
         subnets.append({'localSubnet': s, 'useVpn': i})
 
     putdata = {'mode': mode, 'hubs': hubs, 'subnets': subnets}
@@ -2000,32 +1601,11 @@ def updatevpnsettings(apikey, networkid, mode='None', subnets=None, usevpn=None,
 
     putdata = json.dumps(putdata)
     dashboard = requests.put(puturl, data=putdata, headers=headers)
-
     #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
-    # If HTTP 400 is specifically returned, inform that network is currently bound to a template
+    # Call return handler function to parse Dashboard response
     #
-
-    statuscode = format(str(dashboard.status_code))
-    print(statuscode)
-
-    if dashboard.status_code == 201:
-        print('Changed VPN Settings for Network ID {0}'.format(str(networkid)))
-        validjson = __isjson(dashboard.text)
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
-
-    elif statuscode[:1] == '4' or statuscode[:1] == '5':
-        print('An error has occurred accessing the Meraki Dashboard API check returned data for error details if '
-              'available - HTTP Status Code: {0}'.format(str(statuscode)))
-        validjson = __isjson(dashboard.text)
-        if validjson is True:
-            return json.loads(dashboard.text)
-        else:
-            return None
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
 
 def updatenonmerakivpn(apikey, organizationid, names, ips, secrets, remotenets, tags=None):
@@ -2039,6 +1619,7 @@ def updatenonmerakivpn(apikey, organizationid, names, ips, secrets, remotenets, 
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
     __hasorgaccess(apikey, organizationid)
+    calltype = 'Update Non-Meraki VPN Peers'
 
     puturl = '{0}/organizations/{1}/thirdPartyVPNPeers'.format(str(base_url), str(organizationid))
     headers = {
@@ -2059,6 +1640,12 @@ def updatenonmerakivpn(apikey, organizationid, names, ips, secrets, remotenets, 
             tags = []
             for x in names:
                 tags.append(['all'])
+        for n in remotenets:
+            if isinstance(n, list):
+                for sn in n:
+                    __validsubnetip(sn)
+            else:
+                __validsubnetip(n)
         peerlist = list(zip(names, ips, secrets, remotenets, tags))
         putdata = []
         peer = {}
@@ -2071,24 +1658,13 @@ def updatenonmerakivpn(apikey, organizationid, names, ips, secrets, remotenets, 
             putdata.append((peer.copy()))
             peer.clear()
     else:
-        raise TypeError('All peer arguments must be passed as lists')
+        raise TypeError('All peer arguments must be passed as lists, tags argument may be excluded')
 
     putdata = json.dumps(putdata)
     dashboard = requests.put(puturl, data=putdata, headers=headers)
-
     #
-    # Check for HTTP 4XX/5XX response code.
-    # If 4XX/5XX response code, print error message with response code and return None from function
+    # Call return handler function to parse Dashboard response
     #
-
-    statuscode = format(str(dashboard.status_code))
-    if statuscode[:1] == '4' or statuscode[:1] == '5':
-        print(
-            'An error has occurred accessing the Meraki Dashboard API - HTTP Status Code: {0}'.format(str(statuscode)))
-        return dashboard.text
-    else:
-        print(statuscode)
-
-        return json.loads(dashboard.text)
-
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
 
