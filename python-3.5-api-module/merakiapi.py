@@ -815,17 +815,17 @@ def myorgaccess(apikey):
     return result
 
 
-def getorginventory(apikey, organizationid):
+def getorginventory(apikey, orgid):
     #
     # Pull organization inventory and return decoded JSON string
     #
     #
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
-    __hasorgaccess(apikey, organizationid)
+    __hasorgaccess(apikey, orgid)
     calltype = 'Inventory'
 
-    geturl = '{0}/organizations/{1}/inventory'.format(str(base_url), str(organizationid))
+    geturl = '{0}/organizations/{1}/inventory'.format(str(base_url), str(orgid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -856,17 +856,17 @@ def getnetworkdevices(apikey, networkid):
     return result
 
 
-def getorgadmins(apikey, organizationid):
+def getorgadmins(apikey, orgid):
     #
     # Get administrators for organization and return decoded JSON string
     #
     #
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
-    __hasorgaccess(apikey, organizationid)
+    __hasorgaccess(apikey, orgid)
     calltype = 'Organization'
 
-    geturl = '{0}/organizations/{1}/admins'.format(str(base_url), str(organizationid))
+    geturl = '{0}/organizations/{1}/admins'.format(str(base_url), str(orgid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -879,14 +879,14 @@ def getorgadmins(apikey, organizationid):
     return result
 
 
-def getnetworklist(apikey, organizationid):
+def getnetworklist(apikey, orgid):
     #
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
-    __hasorgaccess(apikey, organizationid)
+    __hasorgaccess(apikey, orgid)
     calltype = 'Network'
 
-    geturl = '{0}/organizations/{1}/networks'.format(str(base_url), str(organizationid))
+    geturl = '{0}/organizations/{1}/networks'.format(str(base_url), str(orgid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -899,14 +899,14 @@ def getnetworklist(apikey, organizationid):
     return result
 
 
-def getlicensestate(apikey, organizationid):
+def getlicensestate(apikey, orgid):
     #
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
-    __hasorgaccess(apikey, organizationid)
+    __hasorgaccess(apikey, orgid)
     calltype = 'License'
 
-    geturl = '{0}/organizations/{1}/licenseState'.format(str(base_url), str(organizationid))
+    geturl = '{0}/organizations/{1}/licenseState'.format(str(base_url), str(orgid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -952,14 +952,14 @@ def getnetworkdetail(apikey, networkid):
     return result
 
 
-def getnonmerakivpnpeers(apikey, organizationid):
+def getnonmerakivpnpeers(apikey, orgid):
     #
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
-    __hasorgaccess(apikey, organizationid)
-    calltype = 'None-Meraki VPN Peer'
+    __hasorgaccess(apikey, orgid)
+    calltype = 'Non-Meraki VPN'
 
-    geturl = '{0}/organizations/{1}/thirdPartyVPNPeers'.format(str(base_url), str(organizationid))
+    geturl = '{0}/organizations/{1}/thirdPartyVPNPeers'.format(str(base_url), str(orgid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -972,14 +972,14 @@ def getnonmerakivpnpeers(apikey, organizationid):
     return result
 
 
-def getsnmpsettings(apikey, organizationid):
+def getsnmpsettings(apikey, orgid):
     #
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
-    __hasorgaccess(apikey, organizationid)
+    __hasorgaccess(apikey, orgid)
     calltype = 'SNMP Settings'
 
-    geturl = '{0}/organizations/{1}/snmp'.format(str(base_url), str(organizationid))
+    geturl = '{0}/organizations/{1}/snmp'.format(str(base_url), str(orgid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -992,14 +992,14 @@ def getsnmpsettings(apikey, organizationid):
     return result
 
 
-def getsamlroles(apikey, organizationid):
+def getsamlroles(apikey, orgid):
     #
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
-    __hasorgaccess(apikey, organizationid)
+    __hasorgaccess(apikey, orgid)
     calltype = 'SAML Roles'
 
-    geturl = '{0}/organizations/{1}/samlRoles'.format(str(base_url), str(organizationid))
+    geturl = '{0}/organizations/{1}/samlRoles'.format(str(base_url), str(orgid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -1072,14 +1072,14 @@ def getvlandetail(apikey, networkid, vlanid):
     return result
 
 
-def gettemplates(apikey, organizationid):
+def gettemplates(apikey, orgid):
     #
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
-    __hasorgaccess(apikey, organizationid)
+    __hasorgaccess(apikey, orgid)
     calltype = 'Templates'
 
-    geturl = '{0}/organizations/{1}/configTemplates'.format(str(base_url), str(organizationid))
+    geturl = '{0}/organizations/{1}/configTemplates'.format(str(base_url), str(orgid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -1127,7 +1127,7 @@ def bindtotemplate(apikey, networkid, templateid, autobind='false'):
 
 
 def adddevtonet(apikey, networkid, serial):
-    calltype = 'Assign Device'
+    calltype = 'Device'
     posturl = '{0}/networks/{1}/devices/claim'.format(str(base_url), str(networkid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
@@ -1159,14 +1159,14 @@ def unbindfromtemplate(apikey, networkid):
     return result
 
 
-def deltemplate(apikey, organizationid, templateid):
+def deltemplate(apikey, orgid, templateid):
     #
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
-    __hasorgaccess(apikey, organizationid)
-    calltype = 'Template Delete'
+    __hasorgaccess(apikey, orgid)
+    calltype = 'Template'
 
-    delurl = '{0}/organizations/{1}/configTemplates/{2}'.format(str(base_url), str(organizationid), str(templateid))
+    delurl = '{0}/organizations/{1}/configTemplates/{2}'.format(str(base_url), str(orgid), str(templateid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -1180,7 +1180,7 @@ def deltemplate(apikey, organizationid, templateid):
 
 
 def updatevlan(apikey, networkid, vlanid, vlanname=None, mxip=None, subnetip=None):
-    calltype = 'VLAN Update'
+    calltype = 'VLAN'
     puturl = '{0}/networks/{1}/vlans/{2}'.format(str(base_url), str(networkid), str(vlanid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
@@ -1204,7 +1204,7 @@ def updatevlan(apikey, networkid, vlanid, vlanname=None, mxip=None, subnetip=Non
 
 
 def addvlan(apikey, networkid, vlanid, vlanname, mxip, subnetip):
-    calltype = 'VLAN Add'
+    calltype = 'VLAN'
     posturl = '{0}/networks/{1}/vlans'.format(str(base_url), str(networkid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
@@ -1226,7 +1226,7 @@ def addvlan(apikey, networkid, vlanid, vlanname, mxip, subnetip):
 
 
 def delvlan(apikey, networkid, vlanid):
-    calltype = 'VLAN Delete'
+    calltype = 'VLAN'
     delurl = '{0}/networks/{1}/vlans/{2}'.format(str(base_url), str(networkid), str(vlanid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
@@ -1240,15 +1240,15 @@ def delvlan(apikey, networkid, vlanid):
     return result
 
 
-def addadmin(apikey, organizationid, email, name, orgaccess=None, tags=None, tagaccess=None, networks=None,
+def addadmin(apikey, orgid, email, name, orgaccess=None, tags=None, tagaccess=None, networks=None,
              netaccess=None):
     #
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
-    __hasorgaccess(apikey, organizationid)
-    calltype = 'Add Administrator'
+    __hasorgaccess(apikey, orgid)
+    calltype = 'Administrator'
 
-    posturl = '{0}/organizations/{1}/admins'.format(str(base_url), str(organizationid))
+    posturl = '{0}/organizations/{1}/admins'.format(str(base_url), str(orgid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -1347,14 +1347,14 @@ def addadmin(apikey, organizationid, email, name, orgaccess=None, tags=None, tag
     return result
 
 
-def deladmin(apikey, organizationid, adminid):
+def deladmin(apikey, orgid, adminid):
     #
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
-    __hasorgaccess(apikey, organizationid)
-    calltype = 'Delete Administrator'
+    __hasorgaccess(apikey, orgid)
+    calltype = 'Administrator'
 
-    delurl = '{0}/organizations/{1}/admins/{2}'.format(str(base_url), str(organizationid), str(adminid))
+    delurl = '{0}/organizations/{1}/admins/{2}'.format(str(base_url), str(orgid), str(adminid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -1367,14 +1367,14 @@ def deladmin(apikey, organizationid, adminid):
     return result
 
 
-def addnetwork(apikey, organizationid, name, nettype, tags, tz):
+def addnetwork(apikey, orgid, name, nettype, tags, tz):
     #
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
-    __hasorgaccess(apikey, organizationid)
-    calltype = 'Add Network'
+    __hasorgaccess(apikey, orgid)
+    calltype = 'Network'
 
-    posturl = '{0}/organizations/{1}/networks'.format(str(base_url), str(organizationid))
+    posturl = '{0}/organizations/{1}/networks'.format(str(base_url), str(orgid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -1408,7 +1408,7 @@ def addnetwork(apikey, organizationid, name, nettype, tags, tz):
 
 
 def delnetwork(apikey, networkid):
-    calltype = 'Delete Network'
+    calltype = 'Network'
     delurl = '{0}/networks/{1}'.format(str(base_url), str(networkid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
@@ -1422,15 +1422,15 @@ def delnetwork(apikey, networkid):
     return result
 
 
-def updateadmin(apikey, organizationid, adminid, email, name=None, orgaccess=None, tags=None, tagaccess=None,
+def updateadmin(apikey, orgid, adminid, email, name=None, orgaccess=None, tags=None, tagaccess=None,
                 networks=None, netaccess=None):
     #
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
-    __hasorgaccess(apikey, organizationid)
-    calltype = 'Update Administrator'
+    __hasorgaccess(apikey, orgid)
+    calltype = 'Administrator'
 
-    puturl = '{0}/organizations/{1}/admins/{2}'.format(str(base_url), str(organizationid), str(adminid))
+    puturl = '{0}/organizations/{1}/admins/{2}'.format(str(base_url), str(orgid), str(adminid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -1557,7 +1557,7 @@ def updateadmin(apikey, organizationid, adminid, email, name=None, orgaccess=Non
 
 
 def getvpnsettings(apikey, networkid):
-    calltype = 'Get AutoVPN Settings'
+    calltype = 'AutoVPN'
     geturl = '{0}/networks/{1}/siteToSiteVpn'.format(str(base_url), str(networkid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
@@ -1572,7 +1572,7 @@ def getvpnsettings(apikey, networkid):
 
 
 def updatevpnsettings(apikey, networkid, mode='None', subnets=None, usevpn=None, hubnetworks=None, defaultroute=None):
-    calltype = 'Update AutoVPN Settings'
+    calltype = 'AutoVPN'
     puturl = '{0}/networks/{1}/siteToSiteVpn'.format(str(base_url), str(networkid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
@@ -1608,7 +1608,7 @@ def updatevpnsettings(apikey, networkid, mode='None', subnets=None, usevpn=None,
     return result
 
 
-def updatenonmerakivpn(apikey, organizationid, names, ips, secrets, remotenets, tags=None):
+def updatenonmerakivpn(apikey, orgid, names, ips, secrets, remotenets, tags=None):
     #
     # Function to update non-Meraki VPN peer information for an organization.  This function will desctructively
     # overwrite ALL existing peer information.  If you only wish to add/update an existing peer you must download
@@ -1618,10 +1618,10 @@ def updatenonmerakivpn(apikey, organizationid, names, ips, secrets, remotenets, 
     #
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
-    __hasorgaccess(apikey, organizationid)
-    calltype = 'Update Non-Meraki VPN Peers'
+    __hasorgaccess(apikey, orgid)
+    calltype = 'Non-Meraki VPN'
 
-    puturl = '{0}/organizations/{1}/thirdPartyVPNPeers'.format(str(base_url), str(organizationid))
+    puturl = '{0}/organizations/{1}/thirdPartyVPNPeers'.format(str(base_url), str(orgid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -1661,6 +1661,99 @@ def updatenonmerakivpn(apikey, organizationid, names, ips, secrets, remotenets, 
         raise TypeError('All peer arguments must be passed as lists, tags argument may be excluded')
 
     putdata = json.dumps(putdata)
+    dashboard = requests.put(puturl, data=putdata, headers=headers)
+    #
+    # Call return handler function to parse Dashboard response
+    #
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
+
+
+def getnonmerakivpn(apikey, orgid):
+    calltype = 'Non-Meraki VPN'
+    geturl =  '{0}/organizations/{1}/thirdPartyVPNPeers'.format(str(base_url), str(orgid))
+    headers = {
+        'x-cisco-meraki-api-key': format(str(apikey)),
+        'Content-Type': 'application/json'
+    }
+    dashboard = requests.get(geturl, headers=headers)
+    #
+    # Call return handler function to parse Dashboard response
+    #
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
+
+
+def appendnonmerakivpnpeers(apikey, orgid, names, ips, secrets, remotenets, tags=None):
+    #
+    # Function to update non-Meraki VPN peer information for an organization.  This function will desctructively
+    # overwrite ALL existing peer information.  If you only wish to add/update an existing peer you must download
+    # all current peer information and make re-upload the modified array of all peers
+    #
+
+    #
+    # Confirm API Key has Admin Access Otherwise Raise Error
+    #
+    __hasorgaccess(apikey, orgid)
+    calltype = 'Non-Meraki VPN'
+
+    puturl = '{0}/organizations/{1}/thirdPartyVPNPeers'.format(str(base_url), str(orgid))
+    geturl =  '{0}/organizations/{1}/thirdPartyVPNPeers'.format(str(base_url), str(orgid))
+    headers = {
+        'x-cisco-meraki-api-key': format(str(apikey)),
+        'Content-Type': 'application/json'
+    }
+
+    currentpeers = json.loads(requests.get(geturl, headers=headers).text)
+#    currentpeers = json.loads(currentpeers.text)
+
+
+    #
+    # Will only upload peer information if lists are passed to the function, otherwise will fail.  If tags argument is
+    # None will assume all peers should be available to all networks.
+    #
+    if any(isinstance(el, list) for el in remotenets) is False:
+        remotenets = [remotenets]
+        warnings.warn('Variable remotenets was not passed as list of lists, it has been converted', ListLengthWarn)
+
+    if isinstance(names, list) and isinstance(ips, list) and isinstance(secrets, list)\
+            and isinstance(remotenets, list) and (tags is None or isinstance(tags, list)):
+        if len(names) + len(ips) + len(secrets) + len(remotenets) / 4 != len(names):
+            warnings.warn('Peers will be added up to the length of the shortest list passed', ListLengthWarn)
+        if tags is None:
+            tags = []
+            for x in names:
+                tags.append(['all'])
+        for n in remotenets:
+            if isinstance(n, list):
+                for sn in n:
+                    __validsubnetip(sn)
+            else:
+                __validsubnetip(n)
+        peerlist = list(zip(names, ips, secrets, remotenets, tags))
+        putdata = []
+        peer = {}
+        for n, i, s, r, t in peerlist:
+            peer['name'] = n
+            peer['publicIp'] = i
+            peer['privateSubnets'] = r
+            peer['secret'] = s
+            peer['tags'] = t
+            putdata.append((peer.copy()))
+            peer.clear()
+        for x in currentpeers:
+            peer['name'] = x['name']
+            peer['publicIp'] = x['publicIp']
+            peer['privateSubnets'] = x['privateSubnets']
+            peer['secret'] = x['secret']
+            peer['tags'] = x['tags']
+            putdata.append((peer.copy()))
+            peer.clear()
+    else:
+        raise TypeError('All peer arguments must be passed as lists, tags argument may be excluded')
+    print(putdata, type(putdata))
+    putdata = json.dumps(putdata)
+    print(putdata, type(putdata))
     dashboard = requests.put(puturl, data=putdata, headers=headers)
     #
     # Call return handler function to parse Dashboard response
