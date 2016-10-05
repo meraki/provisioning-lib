@@ -41,7 +41,7 @@ post_data = {"token": tropo_token,
 #tropo_data = post_data jsonified
 tropo_data = json.dumps(post_data)
 
-#tropo_post = the outcomes of a post request to tropo_api_url with headers and t
+#issue the post and print the http response code and response
 tropo_post = requests.post(tropo_api_url,headers=tropo_headers, data=tropo_data)
 print "HTTP response code: %d" % tropo_post.status_code
 print "HTTP post response: "
