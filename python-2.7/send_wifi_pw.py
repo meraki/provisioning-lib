@@ -1,4 +1,7 @@
 #!/usr/bin/env python2.7
+#
+# A basic script to retrieve an SSID PSK and POST to a Tropo app
+# 10/05/2016
 
 import requests
 import json
@@ -30,10 +33,10 @@ def get_wifi_pw():
             continue
     return pw
 
-#guest_pw = whatever comes back from the get_wifi_pw function
+#guest_pw = result of the get_wifi_pw function
 guest_pw = get_wifi_pw()
 
-#the data that will be passed in the post to Tropo
+#the data that will be passed in the POST to Tropo
 post_data = {"token": tropo_token,
              "pw": guest_pw,
              "number": tropo_phone
@@ -43,6 +46,6 @@ tropo_data = json.dumps(post_data)
 
 #issue the post and print the http response code and response
 tropo_post = requests.post(tropo_api_url,headers=tropo_headers, data=tropo_data)
-print "HTTP response code: %d" % tropo_post.status_code
-print "HTTP post response: "
+print "http response code: %d" % tropo_post.status_code
+print "http post response: "
 print tropo_post.text
