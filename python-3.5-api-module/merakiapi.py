@@ -627,6 +627,13 @@ class ListLengthWarn(Warning):
     pass
 
 
+class IgnoredArgument(Warning):
+    #
+    # Thrown when argument will be ignored
+    #
+    pass
+
+
 class OrgPermissionError(Error):
     #
     # Thrown when supplied API Key does not have access to supplied Organization ID
@@ -668,6 +675,26 @@ def __isjson(myjson):
     return True
 
 
+def __isvalidtz(tz):
+    #
+    # Validates if TZ exists in accepted TZ list
+    #
+    validtz = False
+
+    for zone in tzlist:
+        if validtz is False and format(str(tz)) == zone:
+            validtz = True
+            break
+        else:
+            validtz = False
+
+    if validtz is False:
+        raise ValueError(
+            'Please enter a valid tz value from https://en.wikipedia.org/wiki/List_of_tz_database_time_zones')
+
+    return None
+
+
 def __comparelist(*args):
     #
     # Compare length of multiple list arguments passed to function and exception if any are none and warn if any are
@@ -678,6 +705,9 @@ def __comparelist(*args):
         raise ListError('Empty list passed to function')
     if any(len(lst) != length for lst in args):
         warnings.warn('All lists are not of equal length', ListLengthWarn)
+        return 2
+    else:
+        return 0
 
 
 def __hasorgaccess(apikey, targetorg):
@@ -702,6 +732,7 @@ def __hasorgaccess(apikey, targetorg):
             else:
                 pass
         raise OrgPermissionError
+    return None
 
 
 def __validemail(emailaddress):
@@ -739,7 +770,23 @@ def __validsubnetip(subnetip):
         raise ValueError('Invalid Subnet IP Address {0}'.format(str(subnetip)))
 
 
-def __returnhandler(statuscode, returntext, objtype):
+def __listtotag(taglist):
+    #
+    # Converts list variable to space separated string for API pass to Dashboard
+    #
+
+    liststr = '  '
+
+    if not isinstance(taglist, list):
+        taglist = list(taglist)
+
+    for t in taglist:
+        liststr = liststr + t + '  '
+
+    return liststr
+
+
+def __returnhandler(statuscode, returntext, objtype, suppressprint=False):
     #
     # Parses Dashboard return information and returns error data based on status code and error JSON
     #
@@ -759,45 +806,62 @@ def __returnhandler(statuscode, returntext, objtype):
             noerr = True
 
     if str(statuscode) == '200' and validreturn:
-        print('{0} Operation Successful - See returned data for results\n'.format(str(objtype)))
+        if suppressprint is False:
+            print('{0} Operation Successful - See returned data for results\n'.format(str(objtype)))
         return returntext
     elif str(statuscode) == '200':
-        print('{0} Operation Successful\n'.format(str(objtype)))
+        if suppressprint is False:
+            print('{0} Operation Successful\n'.format(str(objtype)))
         return None
     elif str(statuscode) == '201' and validreturn:
-        print('{0} Added Successfully - See returned data for results\n'.format(str(objtype)))
+        if suppressprint is False:
+            print('{0} Added Successfully - See returned data for results\n'.format(str(objtype)))
         return returntext
     elif str(statuscode) == '201':
-        print('{0} Added Successfully\n'.format(str(objtype)))
+        if suppressprint is False:
+            print('{0} Added Successfully\n'.format(str(objtype)))
         return None
     elif str(statuscode) == '204' and validreturn:
-        print('{0} Deleted Successfully - See returned data for results\n'.format(str(objtype)))
+        if suppressprint is False:
+            print('{0} Deleted Successfully - See returned data for results\n'.format(str(objtype)))
         return returntext
     elif str(statuscode) == '204':
         print('{0} Deleted Successfully\n'.format(str(objtype)))
         return None
     elif str(statuscode) == '400' and validreturn and noerr is False:
-        print('Bad Request - See returned data for error details\n')
+        if suppressprint is False:
+            print('Bad Request - See returned data for error details\n')
         return errmesg
     elif str(statuscode) == '400' and validreturn and noerr:
-        print('Bad Request - See returned data for details\n')
+        if suppressprint is False:
+            print('Bad Request - See returned data for details\n')
         return returntext
     elif str(statuscode) == '400':
-        print('Bad Request - No additional error data available\n')
+        if suppressprint is False:
+            print('Bad Request - No additional error data available\n')
     elif str(statuscode) == '401' and validreturn and noerr is False:
-        print('Unauthorized Access - See returned data for error details\n')
+        if suppressprint is False:
+            print('Unauthorized Access - See returned data for error details\n')
         return errmesg
     elif str(statuscode) == '401' and validreturn:
-        print('Unauthorized Access')
+        if suppressprint is False:
+            print('Unauthorized Access')
         return returntext
     elif str(statuscode) == '404' and validreturn and noerr is False:
-        print('Resource Not Found - See returned data for error details\n')
+        if suppressprint is False:
+            print('Resource Not Found - See returned data for error details\n')
         return errmesg
     elif str(statuscode) == '404' and validreturn:
-        print('Resource Not Found')
+        if suppressprint is False:
+            print('Resource Not Found')
+        return returntext
+    elif str(statuscode) == '500':
+        if suppressprint is False:
+            print('HTTP 500 - Server Error')
         return returntext
     elif validreturn and noerr is False:
-        print('HTTP Status Code: {0} - See returned data for error details\n'.format(str(statuscode)))
+        if suppressprint is False:
+            print('HTTP Status Code: {0} - See returned data for error details\n'.format(str(statuscode)))
         return errmesg
     else:
         print('HTTP Status Code: {0} - No returned data\n'.format(str(statuscode)))
@@ -1100,6 +1164,66 @@ def getswitchstackmembers(apikey, networkid, stackid):
     return result
 
 
+def getswitchports(apikey, serialnum):
+    calltype = 'Switch Port'
+    geturl = '{0}/devices/{1}/switchPorts'.format(str(base_url), str(serialnum))
+    headers = {
+        'x-cisco-meraki-api-key': format(str(apikey)),
+        'Content-Type': 'application/json'
+    }
+    dashboard = requests.get(geturl, headers=headers)
+    #
+    # Call return handler function to parse Dashboard response
+    #
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
+
+
+def getswitchportdetail(apikey, serialnum, portnum):
+    calltype = 'Switch Port Detail'
+    geturl = '{0}/devices/{1}/switchPorts/{2}'.format(str(base_url), str(serialnum), str(portnum))
+    headers = {
+        'x-cisco-meraki-api-key': format(str(apikey)),
+        'Content-Type': 'application/json'
+    }
+    dashboard = requests.get(geturl, headers=headers)
+    #
+    # Call return handler function to parse Dashboard response
+    #
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
+
+
+def getssids(apikey, networkid):
+    calltype = 'SSID'
+    geturl = '{0}/networks/{1}/ssids'.format(str(base_url), str(networkid))
+    headers = {
+        'x-cisco-meraki-api-key': format(str(apikey)),
+        'Content-Type': 'application/json'
+    }
+    dashboard = requests.get(geturl, headers=headers)
+    #
+    # Call return handler function to parse Dashboard response
+    #
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
+
+
+def getssiddetail(apikey, networkid, ssidnum):
+    calltype = 'SSID Detail'
+    geturl = '{0}/networks/{1}/ssids/{2}'.format(str(base_url), str(networkid), str(ssidnum))
+    headers = {
+        'x-cisco-meraki-api-key': format(str(apikey)),
+        'Content-Type': 'application/json'
+    }
+    dashboard = requests.get(geturl, headers=headers)
+    #
+    # Call return handler function to parse Dashboard response
+    #
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
+
+
 def getvlans(apikey, networkid):
     calltype = 'VLANs'
     geturl = '{0}/networks/{1}/vlans'.format(str(base_url), str(networkid))
@@ -1202,7 +1326,7 @@ def adddevtonet(apikey, networkid, serial):
     return result
 
 
-def claim(apikey, orgid, serial=None, licensekey=None, licensemode=None, orderid = None):
+def claim(apikey, orgid, serial=None, licensekey=None, licensemode=None, orderid=None):
     calltype = 'Claim'
     posturl = '{0}/organization/{1}/claim'.format(str(base_url), str(orgid))
     headers = {
@@ -1308,38 +1432,6 @@ def updatevlan(apikey, networkid, vlanid, vlanname=None, mxip=None, subnetip=Non
     if subnetip is not None:
         putdata['subnet'] = format(str(subnetip))
 
-    putdata = json.dumps(putdata)
-    dashboard = requests.put(puturl, data=putdata, headers=headers)
-    #
-    # Call return handler function to parse Dashboard response
-    #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
-    return result
-
-
-def updatedevice(apikey, networkid, serial, name=None, tags=None, lat=None, lng=None, address=None):
-    calltype = 'Device'
-    puturl = '{0}/networks/{1}/devices/{2}'.format(str(base_url), str(networkid), str(serial))
-    headers = {
-        'x-cisco-meraki-api-key': format(str(apikey)),
-        'Content-Type': 'application/json'
-    }
-    putdata = {}
-    puttags = ''
-    if name is not None:
-        putdata['name'] = format(str(name))
-    if lat is not None:
-        putdata['lat'] = format(str(lat))
-    if lng is not None:
-        putdata['lng'] = format(str(lng))
-    if address is not None:
-        putdata['address'] = format(str(address))
-    if tags is not None and isinstance(tags,list):
-        for t in tags:
-            puttags = puttags + '  ' + str(t) + '  '
-    elif tags is not None:
-        puttags = '  ' + str(tags) + '  '
-    putdata['tags'] = puttags
     putdata = json.dumps(putdata)
     dashboard = requests.put(puturl, data=putdata, headers=headers)
     #
@@ -1526,17 +1618,7 @@ def addnetwork(apikey, orgid, name, nettype, tags, tz):
         'Content-Type': 'application/json'
     }
 
-    validtz = False
-    for zone in tzlist:
-        if validtz is False and format(str(tz)) == zone:
-            validtz = True
-            break
-        else:
-            validtz = False
-
-    if validtz is False:
-        print('Please enter a valid tz value from https://en.wikipedia.org/wiki/List_of_tz_database_time_zones')
-        return None
+    __isvalidtz(tz)
 
     postdata = {
         'name': format(str(name)),
@@ -1724,7 +1806,7 @@ def updatevpnsettings(apikey, networkid, mode='None', subnets=None, usevpn=None,
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
     }
-    __comparelist(hubnetworks, defaultroute, 'hubnetworks', 'defaultroute', True, True)
+    __comparelist(hubnetworks, defaultroute)
     if hubnetworks is not None and defaultroute is not None:
         hubmodes = zip(hubnetworks, defaultroute)
     else:
@@ -1830,7 +1912,7 @@ def getnonmerakivpn(apikey, orgid):
     return result
 
 
-def appendnonmerakivpnpeers(apikey, orgid, names, ips, secrets, remotenets, tags=None):
+def appendnonmerakivpn(apikey, orgid, names, ips, secrets, remotenets, tags=None):
     #
     # Function to update non-Meraki VPN peer information for an organization.  This function will desctructively
     # overwrite ALL existing peer information.  If you only wish to add/update an existing peer you must download
@@ -1939,7 +2021,7 @@ def updatesnmpsettings(apikey, orgid, v2c=False, v3=False, v3authmode='SHA', v3a
     if allowedips is not None:
         if isinstance(allowedips, list):
             allowiplist = str(allowedips[0])
-            __validip((allowiplist))
+            __validip(allowiplist)
             if len(allowedips) > 1:
                 for i in allowedips[1:]:
                     __validip(str(i))
@@ -1962,7 +2044,7 @@ def updatesnmpsettings(apikey, orgid, v2c=False, v3=False, v3authmode='SHA', v3a
 
 def removedevfromnet(apikey, networkid, serial):
     calltype = 'Device'
-    posturl = '{0}/networks/{1}/devices/{2}/remove'.format(str(base_url), str(networkid),str(serial))
+    posturl = '{0}/networks/{1}/devices/{2}/remove'.format(str(base_url), str(networkid), str(serial))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
@@ -1974,3 +2056,422 @@ def removedevfromnet(apikey, networkid, serial):
     result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
     return result
 
+
+def addorg(apikey, neworgname):
+    calltype = 'Organization'
+    posturl = '{0}/organizations/'.format(str(base_url))
+    headers = {
+        'x-cisco-meraki-api-key': format(str(apikey)),
+        'Content-Type': 'application/json'
+    }
+    postdata = {
+        'name': format(str(neworgname))
+    }
+    dashboard = requests.post(posturl, data=json.dumps(postdata), headers=headers)
+    #
+    # Call return handler function to parse Dashboard response
+    #
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
+
+
+def cloneorg(apikey, orgid, neworgname):
+    __hasorgaccess(apikey, orgid)
+    calltype = 'Organization Clone'
+    posturl = '{0}/organizations/{1}/clone'.format(str(base_url), str(orgid))
+    headers = {
+        'x-cisco-meraki-api-key': format(str(apikey)),
+        'Content-Type': 'application/json'
+    }
+    postdata = {
+        'name': format(str(neworgname))
+    }
+    dashboard = requests.post(posturl, data=json.dumps(postdata), headers=headers)
+    #
+    # Call return handler function to parse Dashboard response
+    #
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
+
+
+def renameorg(apikey, orgid, neworgname):
+    __hasorgaccess(apikey, orgid)
+    calltype = 'Organization Rename'
+    puturl = '{0}/organizations/{1}'.format(str(base_url), str(orgid))
+    headers = {
+        'x-cisco-meraki-api-key': format(str(apikey)),
+        'Content-Type': 'application/json'
+    }
+    putdata = {
+        'name': format(str(neworgname))
+    }
+    dashboard = requests.put(puturl, data=json.dumps(putdata), headers=headers)
+    #
+    # Call return handler function to parse Dashboard response
+    #
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
+
+
+def updatenetwork(apikey, networkid, name, tz, tags):
+
+    calltype = 'Network'
+    puturl = '{0}/organizations/{1}'.format(str(base_url), str(networkid))
+    headers = {
+        'x-cisco-meraki-api-key': format(str(apikey)),
+        'Content-Type': 'application/json'
+    }
+
+    putdata = {}
+
+    if name:
+        putdata['name'] = name
+
+    if tz:
+        __isvalidtz(tz)
+        putdata['timeZone'] = format(str(tz))
+
+    if tags:
+        putdata['tags'] = __listtotag(tags)
+
+    dashboard = requests.put(puturl, data=json.dumps(putdata), headers=headers)
+    #
+    # Call return handler function to parse Dashboard response
+    #
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
+
+
+def updatedevice(apikey, networkid, sn, name, tags, lat, lng, address):
+
+    calltype = 'Device'
+    posturl = '{0}/networks/{1}/devices/{2}'.format(str(base_url), str(networkid), str(sn))
+    headers = {
+        'x-cisco-meraki-api-key': format(str(apikey)),
+        'Content-Type': 'application/json'
+    }
+
+    putdata = {}
+
+    if name:
+        putdata['name'] = name
+
+    if tags:
+        putdata['tags'] = __listtotag(tags)
+
+    if lat and not lng:
+        raise ValueError('If latitude is entered a longitude value must also be entered')
+    elif lng and not lat:
+        raise ValueError('If longitude is entered a latitude value must also be entered')
+    elif lat and lng:
+        putdata['lat'] = lat
+        putdata['lng'] = lng
+
+    if address:
+        putdata['address'] = address
+
+    dashboard = requests.put(posturl, data=json.dumps(putdata), headers=headers)
+    #
+    # Call return handler function to parse Dashboard response
+    #
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
+
+
+def updatessid(apikey, networkid, ssidnum, name, enabled, authmode, encryptionmode, psk):
+
+    calltype = 'SSID'
+    puturl = '{0}/networks/{1}/ssids/{2}'.format(str(base_url), str(networkid), str(ssidnum))
+    headers = {
+        'x-cisco-meraki-api-key': format(str(apikey)),
+        'Content-Type': 'application/json'
+    }
+
+    putdata = {}
+
+    if name:
+        putdata['name'] = str(name)
+
+    if enabled and (enabled is not False or not True):
+        raise ValueError("Enabled must be a boolean variable")
+    else:
+        putdata['enabled'] = str(enabled)
+
+    if authmode not in ['psk', 'open']:
+        raise ValueError("Authentication mode must be psk or open")
+    elif authmode == 'psk' and (not encryptionmode or not psk):
+        raise ValueError("If authentication mode is set to psk, encryption mode and psk must also be passed")
+    elif authmode == 'open' and (encryptionmode or psk):
+        warnings.warn(IgnoredArgument("If authentication mode is open, encryption mode and psk will be ignored"))
+    elif authmode:
+        putdata['authMode'] = str(authmode)
+
+    if encryptionmode and (authmode is not 'psk' or not psk or not authmode):
+        raise ValueError("If encryption mode is passed, authentication mode must be psk and psk must also be passed")
+    elif encryptionmode:
+        putdata['encryptionMode'] = str(encryptionmode)
+
+    if psk and (authmode is not 'psk' or not encryptionmode or not authmode):
+        raise ValueError("If psk is passed, authentication mode and encryption mode must also be passed")
+    elif len(psk) < 8 and encryptionmode == 'wpa':
+        raise ValueError("If encryption mode is wpa, the psk must be a minimum of 8 characters")
+    elif psk:
+        putdata['psk'] = str(psk)
+
+    dashboard = requests.put(puturl, data=json.dumps(putdata), headers=headers)
+    #
+    # Call return handler function to parse Dashboard response
+    #
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
+
+
+def updateswitchport(apikey, serialnum, portnum, name, tags, enabled, porttype, vlan, voicevlan, allowedvlans, poe,
+                     isolation, rstp, stpguard, accesspolicynum):
+
+    calltype = 'Switch Port'
+    puturl = '{0}/devices/{1}/switchPorts/{2}'.format(str(base_url), str(serialnum), str(portnum))
+    headers = {
+        'x-cisco-meraki-api-key': format(str(apikey)),
+        'Content-Type': 'application/json'
+    }
+
+    putdata = {}
+
+    if name:
+        putdata['name'] = str(name)
+
+    if tags:
+        putdata['tags'] = __listtotag(tags)
+
+    if enabled and (enabled is not False or not True):
+        raise ValueError("Enabled must be a boolean variable")
+    elif enabled:
+        putdata['enabled'] = str(enabled)
+
+    if porttype and porttype not in ['access', 'trunk']:
+        raise ValueError("Type must be either 'access' or 'trunk'")
+    elif porttype:
+        putdata['type'] = str(porttype)
+
+    if vlan:
+        putdata['vlan'] = str(vlan)
+
+    if voicevlan:
+        putdata['voiceVlan'] = voicevlan
+
+    if allowedvlans:
+        putdata['allowedVlans'] = allowedvlans
+
+    if poe and (poe is not False or not True):
+        raise ValueError("PoE enabled must be a boolean variable")
+    elif poe:
+        putdata['poeEnabled'] = str(poe)
+
+    if isolation and (isolation is not False or not True):
+        raise ValueError("Port isolation enabled must be a bolean variable")
+    elif isolation:
+        putdata['isolation'] = isolation
+
+    if rstp and (rstp is not False or not True):
+        raise ValueError("RSTP enabled must be a boolean variable")
+    elif rstp:
+        putdata['rstpEnabled'] = rstp
+
+    if stpguard and stpguard not in ['disabled', 'root guard', 'BPDU guard']:
+        raise ValueError("Valid values for STP Guard are 'disabled', 'root guard',  or 'BPDU Guard'")
+    elif stpguard:
+        putdata['stpGuard'] = stpguard
+
+    if accesspolicynum:
+        putdata['accessPolicyNumber'] = accesspolicynum
+
+    dashboard = requests.put(puturl, data=json.dumps(putdata), headers=headers)
+    #
+    # Call return handler function to parse Dashboard response
+    #
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
+
+
+def addsamlrole(apikey, orgid, rolename, orgaccess, tags, tagaccess, networks, netaccess):
+    #
+    # Confirm API Key has Admin Access Otherwise Raise Error
+    #
+    __hasorgaccess(apikey, orgid)
+    calltype = 'SAML Role'
+
+    posturl = '{0}/organizations/{1}/samlRoles'.format(str(base_url), str(orgid))
+    headers = {
+        'x-cisco-meraki-api-key': format(str(apikey)),
+        'Content-Type': 'application/json'
+    }
+
+    if not orgaccess and not tags and not networks:
+        raise AttributeError("At least one of organization access, tag based access, or network based access must be "
+                             "defined")
+    if orgaccess and orgaccess not in ['read-only', 'full', 'none']:
+        raise ValueError("Organization access must be either 'read-only' or 'full' or 'none'")
+
+    posttags = []
+
+    taglist = False
+
+    if (tags and not tagaccess) or (tagaccess and not tags):
+        raise AttributeError("Both tags and tag access lists must be passed if tag based permissions are defined")
+    elif tags and tagaccess:
+        taglist = True
+
+    if taglist is True:
+        tagcompare = __comparelist(tags, tagaccess)
+
+        if tagcompare == 2:
+            warnings.warn(ListLengthWarn("Tags and tag access list are not the same length, lists will be joined to "
+                                         "the shortest length list"))
+            tagzip = zip(tags, tagaccess)
+            for t, ta in tagzip:
+                posttags.append({'tag': t, 'access': ta})
+
+        elif tagcompare == 0:
+
+            tagzip = zip(tags, tagaccess)
+            for t, ta in tagzip:
+                posttags.append({'tag': t, 'access': ta})
+
+    postnets = []
+
+    netlist = False
+
+    if (networks and not netaccess) or (netaccess and not networks):
+        raise AttributeError("Both network and network access lists must be passed if network based permissions "
+                             "are defined")
+    elif networks and netaccess:
+        netlist = True
+
+    if netlist is True:
+        netcompare = __comparelist(networks, netaccess)
+        if netcompare == 2:
+            warnings.warn(ListLengthWarn("Networks and tag access list are not the same length, lists will be joined to"
+                                         " the shortest length list"))
+            netzip = zip(networks, netaccess)
+
+            for n, na in netzip:
+                postnets.append({'id': n, 'access': na})
+        elif netcompare == 0:
+            netzip = zip(networks, netaccess)
+
+            for n, na in netzip:
+                postnets.append({'id': n, 'access': na})
+
+    postdata = {}
+
+    if not rolename:
+        raise ValueError("Role name must be passed for role creation")
+    else:
+        postdata['role'] = str(rolename)
+
+    if orgaccess:
+        postdata['orgAccess'] = str(orgaccess)
+
+    if taglist is True:
+        postdata['tags'] = posttags
+
+    if netlist is True:
+        postdata['networks'] = postnets
+
+    dashboard = requests.post(posturl, data=json.dumps(postdata), headers=headers)
+    #
+    # Call return handler function to parse Dashboard response
+    #
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
+
+
+def updatesamlrole(apikey, orgid, roleid, rolename, orgaccess, tags, tagaccess, networks, netaccess):
+    #
+    # Confirm API Key has Admin Access Otherwise Raise Error
+    #
+    __hasorgaccess(apikey, orgid)
+    calltype = 'SAML Role'
+
+    puturl = '{0}/organizations/{1}/samlRoles/{2}'.format(str(base_url), str(orgid), str(roleid))
+    headers = {
+        'x-cisco-meraki-api-key': format(str(apikey)),
+        'Content-Type': 'application/json'
+    }
+
+    if orgaccess and orgaccess not in ['read-only', 'full', 'none']:
+        raise ValueError("Organization access must be either 'read-only' or 'full' or 'none")
+
+    puttags = []
+
+    taglist = False
+
+    if (tags and not tagaccess) or (tagaccess and not tags):
+        raise AttributeError("Both tags and tag access lists must be passed if tag based permissions are defined")
+    elif tags and tagaccess:
+        taglist = True
+
+    if taglist is True:
+        tagcompare = __comparelist(tags, tagaccess)
+
+        if tagcompare == 2:
+            warnings.warn(ListLengthWarn("Tags and tag access list are not the same length, lists will be joined to "
+                                         "the shortest length list"))
+            tagzip = zip(tags, tagaccess)
+            for t, ta in tagzip:
+                puttags.append({'tag': t, 'access': ta})
+
+        elif tagcompare == 0:
+
+            tagzip = zip(tags, tagaccess)
+            for t, ta in tagzip:
+                puttags.append({'tag': t, 'access': ta})
+
+    putnets = []
+
+    netlist = False
+
+    if (networks and not netaccess) or (netaccess and not networks):
+        raise AttributeError("Both network and network access lists must be passed if network based permissions "
+                             "are defined")
+    elif networks and netaccess:
+        netlist = True
+
+    if netlist is True:
+        netcompare = __comparelist(networks, netaccess)
+        if netcompare == 2:
+            warnings.warn(ListLengthWarn("Networks and tag access list are not the same length, lists will be joined to"
+                                         " the shortest length list"))
+            netzip = zip(networks, netaccess)
+
+            for n, na in netzip:
+                putnets.append({'id': n, 'access': na})
+        elif netcompare == 0:
+            netzip = zip(networks, netaccess)
+
+            for n, na in netzip:
+                putnets.append({'id': n, 'access': na})
+
+    roledata = {}
+
+    if rolename:
+        roledata['role'] = str(rolename)
+
+    if orgaccess:
+        roledata['orgAccess'] = str(orgaccess)
+
+    if taglist is True:
+        roledata['tags'] = puttags
+
+    if netlist is True:
+        roledata['networks'] = putnets
+
+    putdata = [roledata]
+    print(roledata, putdata, sep='\n')
+    dashboard = requests.put(puturl, data=json.dumps(roledata), headers=headers)
+    #
+    # Call return handler function to parse Dashboard response
+    #
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    return result
