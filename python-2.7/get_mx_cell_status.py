@@ -54,7 +54,7 @@ def get_cell_status():
             # write devName to CSV
             csv_row_text = format(str(dev_name))
             csv_writer.writerow([csv_row_text])
-            print "writing to CSV: %s ..." % csv_row_text  # for watching live
+            print "writing to CSV: %s" % csv_row_text  # for watching live
         else:
             # ignoring anything without 'Active' status
             continue
