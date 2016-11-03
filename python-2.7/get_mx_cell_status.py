@@ -6,7 +6,6 @@
 # active until they reconnect to dashboard to update their status
 
 import csv
-import json
 import meraki_info
 # snmp_helper courtesy Kirk Byers: https://github.com/ktbyers/pynet/blob/master/snmp/snmp_helper.py
 import snmp_helper
