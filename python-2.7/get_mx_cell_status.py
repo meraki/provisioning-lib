@@ -13,7 +13,6 @@ import snmp_helper
 
 
 # Global variables
-api_key = meraki_info.api_key
 snmp_port = meraki_info.snmp_port
 community_string = meraki_info.community_string
 
