@@ -1298,7 +1298,7 @@ def bindtotemplate(apikey, networkid, templateid, autobind='false'):
     }
     postdata = {
         'configTemplateId': format(str(templateid)),
-        'autobind': format(str(autobind))
+        'autoBind': format(str(autobind))
     }
     dashboard = requests.post(posturl, data=json.dumps(postdata), headers=headers)
     #
