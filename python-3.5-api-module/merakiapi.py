@@ -786,7 +786,7 @@ def __listtotag(taglist):
     return liststr
 
 
-def __returnhandler(statuscode, returntext, objtype, suppressprint=False):
+def __returnhandler(statuscode, returntext, objtype, suppressprint):
     #
     # Parses Dashboard return information and returns error data based on status code and error JSON
     #
@@ -867,7 +867,7 @@ def __returnhandler(statuscode, returntext, objtype, suppressprint=False):
         print('HTTP Status Code: {0} - No returned data\n'.format(str(statuscode)))
 
 
-def myorgaccess(apikey):
+def myorgaccess(apikey, suppressprint=False):
     #
     # Query Dashboard for OrgID's that API key has access to
     #
@@ -881,11 +881,11 @@ def myorgaccess(apikey):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def getorg(apikey, orgid):
+def getorg(apikey, orgid, suppressprint=False):
     calltype = 'Organization'
     geturl = '{0}/organizations/{1}'.format(str(base_url), str(orgid))
     headers = {
@@ -896,11 +896,11 @@ def getorg(apikey, orgid):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def getorginventory(apikey, orgid):
+def getorginventory(apikey, orgid, suppressprint=False):
     #
     # Pull organization inventory and return decoded JSON string
     #
@@ -919,11 +919,11 @@ def getorginventory(apikey, orgid):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def getnetworkdevices(apikey, networkid):
+def getnetworkdevices(apikey, networkid, suppressprint=False):
     #
     # Get network inventory and return as decoded JSON string
     #
@@ -937,11 +937,11 @@ def getnetworkdevices(apikey, networkid):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def getorgadmins(apikey, orgid):
+def getorgadmins(apikey, orgid, suppressprint=False):
     #
     # Get administrators for organization and return decoded JSON string
     #
@@ -960,11 +960,11 @@ def getorgadmins(apikey, orgid):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def getnetworklist(apikey, orgid):
+def getnetworklist(apikey, orgid, suppressprint=False):
     #
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
@@ -980,11 +980,11 @@ def getnetworklist(apikey, orgid):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def getlicensestate(apikey, orgid):
+def getlicensestate(apikey, orgid, suppressprint=False):
     #
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
@@ -1000,11 +1000,11 @@ def getlicensestate(apikey, orgid):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def getdevicedetail(apikey, networkid, serialnumber):
+def getdevicedetail(apikey, networkid, serialnumber, suppressprint=False):
 
     calltype = 'Device Detail'
     geturl = '{0}/networks/{1}/devices/{2}'.format(str(base_url), str(networkid), str(serialnumber))
@@ -1017,11 +1017,11 @@ def getdevicedetail(apikey, networkid, serialnumber):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def getnetworkdetail(apikey, networkid):
+def getnetworkdetail(apikey, networkid, suppressprint=False):
 
     calltype = 'Network Detail'
     geturl = '{0}/networks/{1}'.format(str(base_url), str(networkid))
@@ -1033,11 +1033,11 @@ def getnetworkdetail(apikey, networkid):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def getnetworktrafficstats(apikey, networkid, timespan=86400, devicetype='combined'):
+def getnetworktrafficstats(apikey, networkid, timespan=86400, devicetype='combined', suppressprint=False):
 
     calltype = 'Network Detail'
     geturl = '{0}/networks/{1}/traffic?timespan={2}&deviceType={3}'.format(str(base_url), str(networkid), str(timespan),
@@ -1050,11 +1050,11 @@ def getnetworktrafficstats(apikey, networkid, timespan=86400, devicetype='combin
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def getnonmerakivpnpeers(apikey, orgid):
+def getnonmerakivpnpeers(apikey, orgid, suppressprint=False):
     #
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
@@ -1070,11 +1070,11 @@ def getnonmerakivpnpeers(apikey, orgid):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def getsnmpsettings(apikey, orgid):
+def getsnmpsettings(apikey, orgid, suppressprint=False):
     #
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
@@ -1090,11 +1090,11 @@ def getsnmpsettings(apikey, orgid):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def getsamlroles(apikey, orgid):
+def getsamlroles(apikey, orgid, suppressprint=False):
     #
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
@@ -1110,11 +1110,11 @@ def getsamlroles(apikey, orgid):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def getsamlroledetail(apikey, orgid, roleid):
+def getsamlroledetail(apikey, orgid, roleid, suppressprint=False):
     #
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
@@ -1130,11 +1130,11 @@ def getsamlroledetail(apikey, orgid, roleid):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def getswitchstacks(apikey, networkid):
+def getswitchstacks(apikey, networkid, suppressprint=False):
     calltype = 'Switch Stacks'
     geturl = '{0}/networks/{1}/switchStacks'.format(str(base_url), str(networkid))
     headers = {
@@ -1145,11 +1145,11 @@ def getswitchstacks(apikey, networkid):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def getswitchstackmembers(apikey, networkid, stackid):
+def getswitchstackmembers(apikey, networkid, stackid, suppressprint=False):
     calltype = 'Switch Stack Members'
     geturl = '{0}/networks/{1}/switchStacks/{2}'.format(str(base_url), str(networkid), str(stackid))
     headers = {
@@ -1160,11 +1160,11 @@ def getswitchstackmembers(apikey, networkid, stackid):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def getswitchports(apikey, serialnum):
+def getswitchports(apikey, serialnum, suppressprint=False):
     calltype = 'Switch Port'
     geturl = '{0}/devices/{1}/switchPorts'.format(str(base_url), str(serialnum))
     headers = {
@@ -1175,11 +1175,11 @@ def getswitchports(apikey, serialnum):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def getswitchportdetail(apikey, serialnum, portnum):
+def getswitchportdetail(apikey, serialnum, portnum, suppressprint=False):
     calltype = 'Switch Port Detail'
     geturl = '{0}/devices/{1}/switchPorts/{2}'.format(str(base_url), str(serialnum), str(portnum))
     headers = {
@@ -1190,11 +1190,11 @@ def getswitchportdetail(apikey, serialnum, portnum):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def getssids(apikey, networkid):
+def getssids(apikey, networkid, suppressprint=False):
     calltype = 'SSID'
     geturl = '{0}/networks/{1}/ssids'.format(str(base_url), str(networkid))
     headers = {
@@ -1205,11 +1205,11 @@ def getssids(apikey, networkid):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def getssiddetail(apikey, networkid, ssidnum):
+def getssiddetail(apikey, networkid, ssidnum, suppressprint=False):
     calltype = 'SSID Detail'
     geturl = '{0}/networks/{1}/ssids/{2}'.format(str(base_url), str(networkid), str(ssidnum))
     headers = {
@@ -1220,11 +1220,11 @@ def getssiddetail(apikey, networkid, ssidnum):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def getvlans(apikey, networkid):
+def getvlans(apikey, networkid, suppressprint=False):
     calltype = 'VLANs'
     geturl = '{0}/networks/{1}/vlans'.format(str(base_url), str(networkid))
     headers = {
@@ -1235,11 +1235,11 @@ def getvlans(apikey, networkid):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def getvlandetail(apikey, networkid, vlanid):
+def getvlandetail(apikey, networkid, vlanid, suppressprint=False):
     calltype = 'VLAN Detail'
     geturl = '{0}/networks/{1}/vlans/{2}'.format(str(base_url), str(networkid), str(vlanid))
     headers = {
@@ -1250,11 +1250,11 @@ def getvlandetail(apikey, networkid, vlanid):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def gettemplates(apikey, orgid):
+def gettemplates(apikey, orgid, suppressprint=False):
     #
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
@@ -1270,11 +1270,11 @@ def gettemplates(apikey, orgid):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def getclients(apikey, serialnum, timestamp=86400):
+def getclients(apikey, serialnum, timestamp=86400, suppressprint=False):
     calltype = 'Device Clients'
     geturl = '{0}/devices/{1}/clients?timespan={2}'.format(str(base_url), str(serialnum), str(timestamp))
     headers = {
@@ -1285,11 +1285,11 @@ def getclients(apikey, serialnum, timestamp=86400):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def bindtotemplate(apikey, networkid, templateid, autobind='false'):
+def bindtotemplate(apikey, networkid, templateid, autobind='false', suppressprint=False):
     calltype = 'Template Bind'
     posturl = '{0}/networks/{1}/bind'.format(str(base_url), str(networkid))
     headers = {
@@ -1304,11 +1304,11 @@ def bindtotemplate(apikey, networkid, templateid, autobind='false'):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def adddevtonet(apikey, networkid, serial):
+def adddevtonet(apikey, networkid, serial, suppressprint=False):
     calltype = 'Device'
     posturl = '{0}/networks/{1}/devices/claim'.format(str(base_url), str(networkid))
     headers = {
@@ -1322,11 +1322,11 @@ def adddevtonet(apikey, networkid, serial):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def claim(apikey, orgid, serial=None, licensekey=None, licensemode=None, orderid=None):
+def claim(apikey, orgid, serial=None, licensekey=None, licensemode=None, orderid=None, suppressprint=False):
     calltype = 'Claim'
     posturl = '{0}/organization/{1}/claim'.format(str(base_url), str(orgid))
     headers = {
@@ -1358,11 +1358,11 @@ def claim(apikey, orgid, serial=None, licensekey=None, licensemode=None, orderid
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def unbindfromtemplate(apikey, networkid):
+def unbindfromtemplate(apikey, networkid, suppressprint=False):
     calltype = 'Network Unbind'
     posturl = '{0}/networks/{1}/unbind'.format(str(base_url), str(networkid))
     headers = {
@@ -1373,11 +1373,11 @@ def unbindfromtemplate(apikey, networkid):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def deltemplate(apikey, orgid, templateid):
+def deltemplate(apikey, orgid, templateid, suppressprint=False):
     #
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
@@ -1393,11 +1393,11 @@ def deltemplate(apikey, orgid, templateid):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def delsamlrole(apikey, orgid, roleid):
+def delsamlrole(apikey, orgid, roleid, suppressprint=False):
     #
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
@@ -1413,11 +1413,11 @@ def delsamlrole(apikey, orgid, roleid):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def updatevlan(apikey, networkid, vlanid, vlanname=None, mxip=None, subnetip=None):
+def updatevlan(apikey, networkid, vlanid, vlanname=None, mxip=None, subnetip=None, suppressprint=False):
     calltype = 'VLAN'
     puturl = '{0}/networks/{1}/vlans/{2}'.format(str(base_url), str(networkid), str(vlanid))
     headers = {
@@ -1437,11 +1437,11 @@ def updatevlan(apikey, networkid, vlanid, vlanname=None, mxip=None, subnetip=Non
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def addvlan(apikey, networkid, vlanid, vlanname, mxip, subnetip):
+def addvlan(apikey, networkid, vlanid, vlanname, mxip, subnetip, suppressprint=False):
     calltype = 'VLAN'
     posturl = '{0}/networks/{1}/vlans'.format(str(base_url), str(networkid))
     headers = {
@@ -1459,11 +1459,11 @@ def addvlan(apikey, networkid, vlanid, vlanname, mxip, subnetip):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def delvlan(apikey, networkid, vlanid):
+def delvlan(apikey, networkid, vlanid, suppressprint=False):
     calltype = 'VLAN'
     delurl = '{0}/networks/{1}/vlans/{2}'.format(str(base_url), str(networkid), str(vlanid))
     headers = {
@@ -1474,12 +1474,12 @@ def delvlan(apikey, networkid, vlanid):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
 def addadmin(apikey, orgid, email, name, orgaccess=None, tags=None, tagaccess=None, networks=None,
-             netaccess=None):
+             netaccess=None, suppressprint=False):
     #
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
@@ -1581,11 +1581,11 @@ def addadmin(apikey, orgid, email, name, orgaccess=None, tags=None, tagaccess=No
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def deladmin(apikey, orgid, adminid):
+def deladmin(apikey, orgid, adminid, suppressprint=False):
     #
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
@@ -1601,11 +1601,11 @@ def deladmin(apikey, orgid, adminid):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def addnetwork(apikey, orgid, name, nettype, tags, tz):
+def addnetwork(apikey, orgid, name, nettype, tags, tz, suppressprint=False):
     #
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
@@ -1631,11 +1631,11 @@ def addnetwork(apikey, orgid, name, nettype, tags, tz):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def delnetwork(apikey, networkid):
+def delnetwork(apikey, networkid, suppressprint=False):
     calltype = 'Network'
     delurl = '{0}/networks/{1}'.format(str(base_url), str(networkid))
     headers = {
@@ -1646,12 +1646,12 @@ def delnetwork(apikey, networkid):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
 def updateadmin(apikey, orgid, adminid, email, name=None, orgaccess=None, tags=None, tagaccess=None,
-                networks=None, netaccess=None):
+                networks=None, netaccess=None, suppressprint=False):
     #
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
@@ -1780,11 +1780,11 @@ def updateadmin(apikey, orgid, adminid, email, name=None, orgaccess=None, tags=N
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def getvpnsettings(apikey, networkid):
+def getvpnsettings(apikey, networkid, suppressprint=False):
     calltype = 'AutoVPN'
     geturl = '{0}/networks/{1}/siteToSiteVpn'.format(str(base_url), str(networkid))
     headers = {
@@ -1795,11 +1795,12 @@ def getvpnsettings(apikey, networkid):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def updatevpnsettings(apikey, networkid, mode='None', subnets=None, usevpn=None, hubnetworks=None, defaultroute=None):
+def updatevpnsettings(apikey, networkid, mode='None', subnets=None, usevpn=None, hubnetworks=None, defaultroute=None,
+                      suppressprint=False):
     calltype = 'AutoVPN'
     puturl = '{0}/networks/{1}/siteToSiteVpn'.format(str(base_url), str(networkid))
     headers = {
@@ -1832,11 +1833,11 @@ def updatevpnsettings(apikey, networkid, mode='None', subnets=None, usevpn=None,
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def updatenonmerakivpn(apikey, orgid, names, ips, secrets, remotenets, tags=None):
+def updatenonmerakivpn(apikey, orgid, names, ips, secrets, remotenets, tags=None, suppressprint=False):
     #
     # Function to update non-Meraki VPN peer information for an organization.  This function will desctructively
     # overwrite ALL existing peer information.  If you only wish to add/update an existing peer you must download
@@ -1893,11 +1894,11 @@ def updatenonmerakivpn(apikey, orgid, names, ips, secrets, remotenets, tags=None
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def getnonmerakivpn(apikey, orgid):
+def getnonmerakivpn(apikey, orgid, suppressprint=False):
     calltype = 'Non-Meraki VPN'
     geturl = '{0}/organizations/{1}/thirdPartyVPNPeers'.format(str(base_url), str(orgid))
     headers = {
@@ -1908,11 +1909,11 @@ def getnonmerakivpn(apikey, orgid):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def appendnonmerakivpn(apikey, orgid, names, ips, secrets, remotenets, tags=None):
+def appendnonmerakivpn(apikey, orgid, names, ips, secrets, remotenets, tags=None, suppressprint=False):
     #
     # Function to update non-Meraki VPN peer information for an organization.  This function will desctructively
     # overwrite ALL existing peer information.  If you only wish to add/update an existing peer you must download
@@ -1982,12 +1983,12 @@ def appendnonmerakivpn(apikey, orgid, names, ips, secrets, remotenets, tags=None
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
 def updatesnmpsettings(apikey, orgid, v2c=False, v3=False, v3authmode='SHA', v3authpw=None, v3privmode='AES128',
-                       v3privpw=None, allowedips=None):
+                       v3privpw=None, allowedips=None, suppressprint=False):
     #
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
@@ -2038,11 +2039,11 @@ def updatesnmpsettings(apikey, orgid, v2c=False, v3=False, v3authmode='SHA', v3a
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def removedevfromnet(apikey, networkid, serial):
+def removedevfromnet(apikey, networkid, serial, suppressprint=False):
     calltype = 'Device'
     posturl = '{0}/networks/{1}/devices/{2}/remove'.format(str(base_url), str(networkid), str(serial))
     headers = {
@@ -2053,11 +2054,11 @@ def removedevfromnet(apikey, networkid, serial):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def addorg(apikey, neworgname):
+def addorg(apikey, neworgname, suppressprint=False):
     calltype = 'Organization'
     posturl = '{0}/organizations/'.format(str(base_url))
     headers = {
@@ -2071,11 +2072,11 @@ def addorg(apikey, neworgname):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def cloneorg(apikey, orgid, neworgname):
+def cloneorg(apikey, orgid, neworgname, suppressprint=False):
     __hasorgaccess(apikey, orgid)
     calltype = 'Organization Clone'
     posturl = '{0}/organizations/{1}/clone'.format(str(base_url), str(orgid))
@@ -2090,11 +2091,11 @@ def cloneorg(apikey, orgid, neworgname):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def renameorg(apikey, orgid, neworgname):
+def renameorg(apikey, orgid, neworgname, suppressprint=False):
     __hasorgaccess(apikey, orgid)
     calltype = 'Organization Rename'
     puturl = '{0}/organizations/{1}'.format(str(base_url), str(orgid))
@@ -2109,11 +2110,11 @@ def renameorg(apikey, orgid, neworgname):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def updatenetwork(apikey, networkid, name, tz, tags):
+def updatenetwork(apikey, networkid, name, tz, tags, suppressprint=False):
 
     calltype = 'Network'
     puturl = '{0}/organizations/{1}'.format(str(base_url), str(networkid))
@@ -2138,11 +2139,11 @@ def updatenetwork(apikey, networkid, name, tz, tags):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def updatedevice(apikey, networkid, sn, name, tags, lat, lng, address):
+def updatedevice(apikey, networkid, sn, name, tags, lat, lng, address, suppressprint=False):
 
     calltype = 'Device'
     posturl = '{0}/networks/{1}/devices/{2}'.format(str(base_url), str(networkid), str(sn))
@@ -2174,11 +2175,11 @@ def updatedevice(apikey, networkid, sn, name, tags, lat, lng, address):
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def updatessid(apikey, networkid, ssidnum, name, enabled, authmode, encryptionmode, psk):
+def updatessid(apikey, networkid, ssidnum, name, enabled, authmode, encryptionmode, psk, suppressprint=False):
 
     calltype = 'SSID'
     puturl = '{0}/networks/{1}/ssids/{2}'.format(str(base_url), str(networkid), str(ssidnum))
@@ -2222,12 +2223,12 @@ def updatessid(apikey, networkid, ssidnum, name, enabled, authmode, encryptionmo
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
 def updateswitchport(apikey, serialnum, portnum, name, tags, enabled, porttype, vlan, voicevlan, allowedvlans, poe,
-                     isolation, rstp, stpguard, accesspolicynum):
+                     isolation, rstp, stpguard, accesspolicynum, suppressprint=False):
 
     calltype = 'Switch Port'
     puturl = '{0}/devices/{1}/switchPorts/{2}'.format(str(base_url), str(serialnum), str(portnum))
@@ -2290,11 +2291,11 @@ def updateswitchport(apikey, serialnum, portnum, name, tags, enabled, porttype, 
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def addsamlrole(apikey, orgid, rolename, orgaccess, tags, tagaccess, networks, netaccess):
+def addsamlrole(apikey, orgid, rolename, orgaccess, tags, tagaccess, networks, netaccess, suppressprint=False):
     #
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
@@ -2383,11 +2384,12 @@ def addsamlrole(apikey, orgid, rolename, orgaccess, tags, tagaccess, networks, n
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
 
-def updatesamlrole(apikey, orgid, roleid, rolename, orgaccess, tags, tagaccess, networks, netaccess):
+def updatesamlrole(apikey, orgid, roleid, rolename, orgaccess, tags, tagaccess, networks, netaccess,
+                   suppressprint=False):
     #
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
@@ -2473,5 +2475,5 @@ def updatesamlrole(apikey, orgid, roleid, rolename, orgaccess, tags, tagaccess, 
     #
     # Call return handler function to parse Dashboard response
     #
-    result = __returnhandler(dashboard.status_code, dashboard.text, calltype)
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
