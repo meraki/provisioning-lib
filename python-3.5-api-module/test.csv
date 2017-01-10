@@ -1,0 +1,4 @@
+networkname,vpn1hubname,vpn1defaultroute,vpn2hubname,vpn2defaultroute,vpn3hubname,vpn3defaultroute
+Teleworker - Employee ID 96278,DC1,False,DC2,False,DC3,True
+Teleworker - Employee ID 45888,DC1,False
+Site Network 1,DC1,True
