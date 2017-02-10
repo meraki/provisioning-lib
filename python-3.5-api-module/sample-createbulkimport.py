@@ -2,8 +2,7 @@ import merakiapi
 import os
 import re
 
-apikey = 'XXXXXX'
-orgid = 'XXXXXX'
+from vars import  org, apikey
 
 # bulk network import filename
 
@@ -39,7 +38,7 @@ else:
     print('Network name,Serial,Network tags,Name,Tags,Address,Notes,Static IP,Netmask,Gateway,DNS1,DNS2,VLAN',
           file=writefile)
 
-orgnetworks = merakiapi.getnetworklist(apikey, orgid)
+orgnetworks = merakiapi.getnetworklist(apikey, org, suppressprint=True)
 
 for network in orgnetworks:
     networkname = network['name']
@@ -47,7 +46,7 @@ for network in orgnetworks:
         networktags = ''
     else:
         networktags = network['tags']
-    devicelist = merakiapi.getnetworkdevices(apikey, network['id'])
+    devicelist = merakiapi.getnetworkdevices(apikey, network['id'], suppressprint=True)
     for device in devicelist:
         if 'serial' not in device:
             serialnum = ''
@@ -77,6 +76,7 @@ for network in orgnetworks:
             # Remove commas from address information as bulk network creator doesn't accept commas in field data
 
             deviceaddr = re.sub(',', ' ', deviceaddr)
+            deviceaddr = re.sub('\n', ' ', deviceaddr)
 
         print('{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12}'.format(str(networkname), str(serialnum),
                                                                               str(networktags), str(devicename),
