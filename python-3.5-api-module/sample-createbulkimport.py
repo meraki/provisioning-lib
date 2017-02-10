@@ -2,7 +2,7 @@ import merakiapi
 import os
 import re
 
-from vars import  org, apikey
+from vars import org, apikey
 
 # bulk network import filename
 
