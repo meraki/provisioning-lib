@@ -12,7 +12,7 @@
 # - 'requests' module
 #
 #######################################################################################################################
-
+from __future__ import print_function
 import requests
 import json
 from ipaddress import ip_address
@@ -662,6 +662,39 @@ class ListError(Error):
     #
     def __init__(self, message):
         self.message = message
+
+
+class DashboardObject(object):
+    #
+    # Base Dashboard object
+    #
+    pass
+
+
+class SSID(DashboardObject):
+
+    #  SSID Object Class
+    #  Refer to https://dashboard.meraki.com/manage/support/api_docs#ssids for details on accepted parameters
+    #
+    #  Provides a simplified object for downloading and manipulating SSID Attributes from Dashboard
+
+    validparams = ['name', 'enabled', 'authMode', 'encryptionMode', 'psk', 'radiusServers', 'radiusAccountingEnabled',
+                   'radiusAccountingServers', 'ipAssignmentMode', 'useVlanTagging', 'concentratorNetworkId', 'vlanID',
+                   'defaultVlanId', 'apTagsAndVlanIds', 'walledGardenEnabled', 'walledGardenRanges', 'splashPage',
+                   'perClientBandwidthLimitUp', 'perClientBandwidthLimitDown']
+    type = 'ssid'
+
+    def __init__(self, ssidnum, **params):
+
+        self.__setattr__('ssidnum', ssidnum)
+
+        for p in params.keys():
+            if p in self.validparams:
+                self.__setattr__(p, params[p])
+            else:
+                raise ValueError('Invalid parameter {0}, please refer to https://dashboard.meraki.com/manage/support/'
+                                 'api_docs#ssids for valid parameters'.format(str(p)))
+
 
 
 def __isjson(myjson):
@@ -2477,3 +2510,23 @@ def updatesamlrole(apikey, orgid, roleid, rolename, orgaccess, tags, tagaccess, 
     #
     result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
+
+
+# def updateobject(apikey, networkid, newelement: DashboardObject, suppressprint=False):
+#
+#     puturl = '{0}/networks/{1}/ssids/{2}'.format(str(base_url), str(networkid), newelement.ssidnum)
+#     headers = {
+#         'x-cisco-meraki-api-key': format(str(apikey)),
+#         'Content-Type': 'application/json'
+#     }
+#     if newelement.type == 'ssid':
+#         puturl = '{0}/networks/{1}/ssids/{2}'.format(str(base_url), str(networkid), newelement.ssidnum)
+#
+#     putdata = json.dumps(newelement.__dict__)
+#     print(putdata)
+#     dashboard = requests.put(puturl, data=putdata, headers=headers)
+#     #
+#     # Call return handler function to parse Dashboard response
+#     #
+#     result = __returnhandler(dashboard.status_code, dashboard.text, str(newelement.type).upper() , suppressprint)
+#     return result
