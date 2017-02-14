@@ -1330,8 +1330,11 @@ def bindtotemplate(apikey, networkid, templateid, autobind=False, suppressprint=
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
     }
-    postdata['configTemplateId'] = format(str(templateid)),
-    postdata['autoBind'] = autobind
+
+    postdata.update({'configTemplateId': format(str(templateid))})
+
+    if autobind is not False:
+        postdata['autoBind'] = autobind
 
     dashboard = requests.post(posturl, data=json.dumps(postdata), headers=headers)
     #
