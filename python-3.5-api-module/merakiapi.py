@@ -1322,17 +1322,17 @@ def getclients(apikey, serialnum, timestamp=86400, suppressprint=False):
     return result
 
 
-def bindtotemplate(apikey, networkid, templateid, autobind='false', suppressprint=False):
+def bindtotemplate(apikey, networkid, templateid, autobind=False, suppressprint=False):
     calltype = 'Template Bind'
     posturl = '{0}/networks/{1}/bind'.format(str(base_url), str(networkid))
+    postdata={}
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
     }
-    postdata = {
-        'configTemplateId': format(str(templateid)),
-        'autoBind': format(str(autobind))
-    }
+    postdata['configTemplateId'] = format(str(templateid)),
+    postdata['autoBind'] = autobind
+
     dashboard = requests.post(posturl, data=json.dumps(postdata), headers=headers)
     #
     # Call return handler function to parse Dashboard response
