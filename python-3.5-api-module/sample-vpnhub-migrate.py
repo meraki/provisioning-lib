@@ -15,10 +15,10 @@ base_url = 'https://dashboard.meraki.com/api/v0'
 #
 #   Takes a CSV input file of network name to VPN Hub Network name mappings and assigns VPN hub priority based on CSV
 #
-#   CSV Format = networkname,hub1name,hub1deaultroute,hub2name,hub2defaultroute,hub3name,hub3defaultroute...
+#   CSV Format = networkname,hub1name,hub1defaultroute,hub2name,hub2defaultroute,hub3name,hub3defaultroute...
 #
 #   There is no limit to the number of hubs per network, script will parse all until line is complete.
-#   Default Route Paramete is either true or false PER hub
+#   Default Route Parameter is either true or false PER hub
 #
 #   Create vars.py with an apikey and org variable that contain your api key and organization ID values
 #   Place the merakiapi.py file in directory
@@ -34,11 +34,11 @@ def main(argv):
     try:
         opts, args = getopt.getopt(argv, "hi:o:", ["ifile=", "ofile="])
     except getopt.GetoptError:
-        print('Usage: python3 config-extractor.py -i <inputfile> -o <outputfile>')
+        print('Usage: python3 sample-vpnhub-migrate.py -i <inputfile> -o <outputfile>')
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print('Usage: python3 config-extractor.py -i <inputfile> -o <outputfile>')
+            print('Usage: python3 sample-vpnhub-migrate.py -i <inputfile> -o <outputfile>')
             sys.exit()
         elif opt in ("-i", "--ifile"):
             inputfile = arg
@@ -48,7 +48,7 @@ def main(argv):
             hasoutput = True
 
     if hasinput is False:
-        print('Usage: python3 config-extractor.py -i <inputfile> -o <outputfile>\n')
+        print('Usage: python3 sample-vpnhub-migrate.py -i <inputfile> -o <outputfile>\n')
         print('Input file must be specified')
         exit()
 
