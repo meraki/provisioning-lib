@@ -1,4 +1,6 @@
-*.pyc
+*.py[cod]
 *ipynb*
 \.*
 key
+apikey*
+__pycahce__/
