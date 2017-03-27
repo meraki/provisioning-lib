@@ -681,8 +681,10 @@ class SSID(DashboardObject):
     validparams = ['name', 'enabled', 'authMode', 'encryptionMode', 'psk', 'radiusServers', 'radiusAccountingEnabled',
                    'radiusAccountingServers', 'ipAssignmentMode', 'useVlanTagging', 'concentratorNetworkId', 'vlanID',
                    'defaultVlanId', 'apTagsAndVlanIds', 'walledGardenEnabled', 'walledGardenRanges', 'splashPage',
-                   'perClientBandwidthLimitUp', 'perClientBandwidthLimitDown']
+                   'perClientBandwidthLimitUp', 'perClientBandwidthLimitDown', 'bandSelection', 'minBitRate',
+                   'radiusCoaEnabled']
     type = 'ssid'
+
 
     def __init__(self, ssidnum, **params):
 
@@ -692,9 +694,8 @@ class SSID(DashboardObject):
             if p in self.validparams:
                 self.__setattr__(p, params[p])
             else:
-                raise ValueError('Invalid parameter {0}, please refer to https://dashboard.meraki.com/manage/support/'
-                                 'api_docs#ssids for valid parameters'.format(str(p)))
-
+                raise ValueError('Invalid parameter {0}, please refer to https://dashboard.meraki.com/api_docs#ssids '
+                                 'for valid parameters'.format(str(p)))
 
 
 def __isjson(myjson):
@@ -1330,7 +1331,7 @@ def bindtotemplate(apikey, networkid, templateid, autobind=False, suppressprint=
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
     }
-    postdata['configTemplateId'] = format(str(templateid)),
+    postdata['configTemplateId'] = format(str(templateid))
     postdata['autoBind'] = autobind
 
     dashboard = requests.post(posturl, data=json.dumps(postdata), headers=headers)
@@ -2512,21 +2513,21 @@ def updatesamlrole(apikey, orgid, roleid, rolename, orgaccess, tags, tagaccess, 
     return result
 
 
-# def updateobject(apikey, networkid, newelement: DashboardObject, suppressprint=False):
-#
-#     puturl = '{0}/networks/{1}/ssids/{2}'.format(str(base_url), str(networkid), newelement.ssidnum)
-#     headers = {
-#         'x-cisco-meraki-api-key': format(str(apikey)),
-#         'Content-Type': 'application/json'
-#     }
-#     if newelement.type == 'ssid':
-#         puturl = '{0}/networks/{1}/ssids/{2}'.format(str(base_url), str(networkid), newelement.ssidnum)
-#
-#     putdata = json.dumps(newelement.__dict__)
-#     print(putdata)
-#     dashboard = requests.put(puturl, data=putdata, headers=headers)
-#     #
-#     # Call return handler function to parse Dashboard response
-#     #
-#     result = __returnhandler(dashboard.status_code, dashboard.text, str(newelement.type).upper() , suppressprint)
-#     return result
+def updateobject(apikey, networkid, newelement: SSID, suppressprint=False):
+
+    # puturl = '{0}/networks/{1}/ssids/{2}'.format(str(base_url), str(networkid), newelement.ssidnum)
+    headers = {
+        'x-cisco-meraki-api-key': format(str(apikey)),
+        'Content-Type': 'application/json'
+    }
+    if newelement.type == 'ssid':
+        puturl = '{0}/networks/{1}/ssids/{2}'.format(str(base_url), str(networkid), newelement.ssidnum)
+
+    putdata = json.dumps(newelement.__dict__)
+#    print(putdata)
+    dashboard = requests.put(puturl, data=putdata, headers=headers)
+    #
+    # Call return handler function to parse Dashboard response
+    #
+    result = __returnhandler(dashboard.status_code, dashboard.text, str(newelement.type).upper(), suppressprint)
+    return result
