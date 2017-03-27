@@ -1331,10 +1331,8 @@ def bindtotemplate(apikey, networkid, templateid, autobind=False, suppressprint=
         'Content-Type': 'application/json'
     }
 
-    postdata.update({'configTemplateId': format(str(templateid))})
-
-    if autobind is not False:
-        postdata['autoBind'] = autobind
+    postdata['configTemplateId'] = format(str(templateid))
+    postdata['autoBind'] = autobind
 
     dashboard = requests.post(posturl, data=json.dumps(postdata), headers=headers)
     #
