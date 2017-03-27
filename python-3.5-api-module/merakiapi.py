@@ -2511,23 +2511,3 @@ def updatesamlrole(apikey, orgid, roleid, rolename, orgaccess, tags, tagaccess, 
     #
     result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
-
-
-# def updateobject(apikey, networkid, newelement: DashboardObject, suppressprint=False):
-#
-#     puturl = '{0}/networks/{1}/ssids/{2}'.format(str(base_url), str(networkid), newelement.ssidnum)
-#     headers = {
-#         'x-cisco-meraki-api-key': format(str(apikey)),
-#         'Content-Type': 'application/json'
-#     }
-#     if newelement.type == 'ssid':
-#         puturl = '{0}/networks/{1}/ssids/{2}'.format(str(base_url), str(networkid), newelement.ssidnum)
-#
-#     putdata = json.dumps(newelement.__dict__)
-#     print(putdata)
-#     dashboard = requests.put(puturl, data=putdata, headers=headers)
-#     #
-#     # Call return handler function to parse Dashboard response
-#     #
-#     result = __returnhandler(dashboard.status_code, dashboard.text, str(newelement.type).upper() , suppressprint)
-#     return result
