@@ -679,7 +679,7 @@ class SSID(DashboardObject):
     #  Provides a simplified object for downloading and manipulating SSID Attributes from Dashboard
 
     validparams = ['name', 'enabled', 'authMode', 'encryptionMode', 'psk', 'radiusServers', 'radiusAccountingEnabled',
-                   'radiusAccountingServers', 'ipAssignmentMode', 'useVlanTagging', 'concentratorNetworkId', 'vlanID',
+                   'radiusAccountingServers', 'ipAssignmentMode', 'useVlanTagging', 'concentratorNetworkId', 'vlanId',
                    'defaultVlanId', 'apTagsAndVlanIds', 'walledGardenEnabled', 'walledGardenRanges', 'splashPage',
                    'perClientBandwidthLimitUp', 'perClientBandwidthLimitDown', 'bandSelection', 'minBitRate',
                    'radiusCoaEnabled']
