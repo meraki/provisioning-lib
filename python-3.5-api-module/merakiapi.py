@@ -2273,52 +2273,52 @@ def updateswitchport(apikey, serialnum, portnum, name, tags, enabled, porttype, 
 
     putdata = {}
 
-    if name:
+    if name in locals():
         putdata['name'] = str(name)
 
-    if tags:
+    if tags in locals():
         putdata['tags'] = __listtotag(tags)
 
-    if enabled and (enabled is not False or not True):
+    if enabled in locals() and not isinstance(enabled, bool):
         raise ValueError("Enabled must be a boolean variable")
-    elif enabled:
+    elif enabled in locals():
         putdata['enabled'] = str(enabled)
 
-    if porttype and porttype not in ['access', 'trunk']:
+    if porttype in locals() and porttype not in ['access', 'trunk']:
         raise ValueError("Type must be either 'access' or 'trunk'")
-    elif porttype:
+    elif porttype in locals():
         putdata['type'] = str(porttype)
 
-    if vlan:
+    if vlan in locals():
         putdata['vlan'] = str(vlan)
 
-    if voicevlan:
+    if voicevlan in locals():
         putdata['voiceVlan'] = voicevlan
 
-    if allowedvlans:
+    if allowedvlans in locals():
         putdata['allowedVlans'] = allowedvlans
 
-    if poe and (poe is not False or not True):
+    if poe in locals and not isinstance(poe, bool):
         raise ValueError("PoE enabled must be a boolean variable")
-    elif poe:
+    elif poe in locals():
         putdata['poeEnabled'] = str(poe)
 
-    if isolation and (isolation is not False or not True):
+    if isolation in locals() and not isinstance(isolation, bool):
         raise ValueError("Port isolation enabled must be a bolean variable")
-    elif isolation:
+    elif isolation in locals():
         putdata['isolation'] = isolation
 
-    if rstp and (rstp is not False or not True):
+    if rstp in locals() and not isinstance(rstp,bool):
         raise ValueError("RSTP enabled must be a boolean variable")
-    elif rstp:
+    elif rstp in locals():
         putdata['rstpEnabled'] = rstp
 
-    if stpguard and stpguard not in ['disabled', 'root guard', 'BPDU guard']:
+    if stpguard in locals() and stpguard not in ['disabled', 'root guard', 'BPDU guard']:
         raise ValueError("Valid values for STP Guard are 'disabled', 'root guard',  or 'BPDU Guard'")
-    elif stpguard:
+    elif stpguard in locals():
         putdata['stpGuard'] = stpguard
 
-    if accesspolicynum:
+    if accesspolicynum in locals():
         putdata['accessPolicyNumber'] = accesspolicynum
 
     dashboard = requests.put(puturl, data=json.dumps(putdata), headers=headers)
@@ -2400,7 +2400,7 @@ def addsamlrole(apikey, orgid, rolename, orgaccess, tags, tagaccess, networks, n
 
     postdata = {}
 
-    if not rolename:
+    if not rolename in locals():
         raise ValueError("Role name must be passed for role creation")
     else:
         postdata['role'] = str(rolename)
