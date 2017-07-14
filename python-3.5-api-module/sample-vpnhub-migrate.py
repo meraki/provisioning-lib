@@ -60,7 +60,7 @@ def main(argv):
 
     try:
         filein = open(inputfile)
-        fileout = open(outfile,'w')
+        fileout = open(outfile, 'w')
         backup = open(backupfile, 'w')
         vpnnetmap = list(csv.DictReader(filein))
         originalmap = copy.deepcopy(vpnnetmap)
