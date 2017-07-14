@@ -2151,7 +2151,7 @@ def renameorg(apikey, orgid, neworgname, suppressprint=False):
 def updatenetwork(apikey, networkid, name, tz, tags, suppressprint=False):
 
     calltype = 'Network'
-    puturl = '{0}/organizations/{1}'.format(str(base_url), str(networkid))
+    puturl = '{0}/networks/{1}'.format(str(base_url), str(networkid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
