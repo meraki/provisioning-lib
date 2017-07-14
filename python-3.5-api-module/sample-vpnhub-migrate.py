@@ -26,7 +26,8 @@ base_url = 'https://dashboard.meraki.com/api/v0'
 ########################################################################################################################
 
 def main(argv):
-    outputfile = 'results.csv'
+    outfile = 'results.out'
+    backupfile = 'backup.vpn'
     hasinput = False
     hasoutput = False
     hasinvalidin = False
@@ -44,7 +45,7 @@ def main(argv):
             inputfile = arg
             hasinput = True
         elif opt in ("-o", "--ofile"):
-            outputfile = arg
+            outfile = arg
             hasoutput = True
 
     if hasinput is False:
@@ -53,96 +54,118 @@ def main(argv):
         exit()
 
     if hasoutput is False:
-        print('\n***WARNING***\nNo output file specified, "{0}" will be used for output'.format(str(outputfile)))
+        print('\n***WARNING***\nNo output file specified, "{0}" will be used for output'.format(str(outfile)))
+
+    print('\n*** Original VPN JSON results will be backed up to {0}'.format(str(backupfile)))
 
     try:
-        infile = open(inputfile)
-        vpnnetmap = list(csv.reader(infile))
-        errorcsv = inputfile+'.error'
+        filein = open(inputfile)
+        fileout = open(outfile, 'w')
+        backup = open(backupfile, 'w')
+        vpnnetmap = list(csv.DictReader(filein))
+        originalmap = copy.deepcopy(vpnnetmap)
+
+        keys = vpnnetmap[0].keys()
+
+        if len(keys) % 2 != 1 or len(keys) < 3:
+            raise KeyError('Invalid number of columns, CSV file must include a network name and at least one pair of '
+                           'hubname and defaultroute definitions, e.g. "networkname,vpn1hubname,vpn1defaultroute"')
+        numhubs = int(((len(keys) - 1) / 2))
+
+        newhublist = []
+        newhub = {}
+
+        orgnets = merakiapi.getnetworklist(apikey, org, suppressprint=True)
+
+        for idx, vl in enumerate(vpnnetmap):
+            invalidentry = False
+            originalmap[idx].update({'error': None, 'posterror': None})
+            if not any(n['name'] == str(vl['networkname']) for n in orgnets):
+                originalmap[idx]['error'] = 'INVALID NETWORK NAME'
+                hasinvalidin = True
+                invalidentry = True
+
+            else:
+                networkdetails = next((net for net in orgnets if net['name'] == vl['networkname']), None)
+
+                if networkdetails is not None:
+                    nid = str(networkdetails['id'])
+                    oldvpn = merakiapi.getvpnsettings(apikey, nid, suppressprint=True)
+                    backup.write(json.dumps(oldvpn) + '\n')
+                    newvpn = copy.deepcopy(oldvpn)
+                    newvpn.update({'networkId': nid})
+
+                else:
+                    oldvpn = None
+
+                if oldvpn['mode'] == 'none' or oldvpn is None:
+                    originalmap[idx]['error'] = 'NETWORK NOT CURRENTLY CONFIGURED FOR VPN'
+                    hasinvalidin = True
+                    invalidentry = True
+                else:
+                    x = 1
+                    while x <= numhubs:
+                        # if not any(n['name'] == vl['vpn{0}hubname'.format(str(x))] for n in orgnets):
+                        #     originalmap[idx]['error'] == 'INVALID HUB NAME FOR HUB {0}'.format(str(x))
+                        #     hasinvalidin == True
+                        newhub.clear()
+                        hubkey = 'vpn' + str(x) + 'hubname'
+                        drkey = 'vpn' + str(x) + 'defaultroute'
+                        if vl[hubkey] is not None and vl[drkey] is not None:
+                            temphubid = (n['id'] for n in orgnets if n['name'] == vl[hubkey])
+                            newhub['hubId'] = ''.join(temphubid)
+                            if str(vl[drkey]).lower() in {'true', 'false'} and vl[drkey] is not None:
+                                if str(vl[drkey]).lower() == 'true':
+                                    newhub['useDefaultRoute'] = bool(1)
+                                elif str(vl[drkey]).lower() == 'false':
+                                    newhub['useDefaultRoute'] = bool(0)
+                                newhublist.append(copy.deepcopy(newhub))
+                            else:
+                                originalmap[idx]['error'] = 'HUB {0}, INVALID DEFAULT ROUTE MUST BE TRUE/FALSE IF HUB' \
+                                                            'DEFINED'.format(str(x))
+                                hasinvalidin = True
+                                invalidentry = True
+                        x += 1
+
+            if newvpn['mode'] != 'none' and invalidentry is not True:
+                newvpn['hubs'] = newhublist
+
+                headers = {
+                    'x-cisco-meraki-api-key': format(str(apikey)),
+                    'Content-Type': 'application/json'
+                }
+                nid = newvpn.pop('networkId', None)
+                putdata = json.dumps(newvpn)
+                puturl = '{0}/networks/{1}/siteToSiteVpn'.format(str(base_url), str(nid))
+                dashboard = requests.put(puturl, data=putdata, headers=headers)
+                if dashboard.status_code == 200:
+                    print('\nUpdated Network - "{0}"'.format(str(nid)))
+                else:
+                    originalmap[idx]['posterror'] = 'UNABLE TO POST - STATUS CODE {0}'.format(str(dashboard.status_code))
+                    hasinvalidin == True
+
+            for e in originalmap:
+                try:
+                    if e['error'] is not None or e['posterror'] is not None:
+                        print(json.dumps(e) + '\n', file=fileout)
+                except KeyError:
+                    pass
+
+        if hasinvalidin == True:
+            print('\n****ERRORS FOUND IN INPUT FILE****\nInvalid Entries in input CSV, see {0} for details'
+                  .format(str(outfile)))
+
 
     except IOError:
             print("***ERROR***\nInput file does not exist: {0}".format(str(inputfile)))
             exit()
+
+
+
     finally:
-        infile.close()
-
-    orgnets = merakiapi.getnetworklist(apikey, org, suppressprint=True)
-    hubs = []
-
-    for net in orgnets:
-        if net['type'] in ('appliance', 'combined'):
-            vpntype = merakiapi.getvpnsettings(apikey,net['id'], suppressprint=True)
-            if vpntype['mode'] == 'hub':
-                hubs.append({'id':net['id'], 'name':net['name']})
-
-    vpnnetmap.pop(0)
-    originalmap = copy.deepcopy(vpnnetmap)
-
-    out = open(outputfile,'w+')
-    for idx, v in enumerate(vpnnetmap):
-        x = 1
-        invalidname = False
-
-        try:
-            v[0] = next(item for item in orgnets if item['name'] == v[0])['id']
-        except StopIteration:
-            print('\n***ERROR***\nNetwork name "{0}" is invalid'.format(str(v[0])))
-            v[0] = 'INVALID NAME'
-            originalmap[idx][0] = 'INVALID NAME'
-            hasinvalidin = True
-            invalidname = True
-        if invalidname == False:
-            while x < len(v) and len(v) > 1:
-                if x % 2 == 0:
-                    if str(v[x]).lower() not in ['true', 'false']:
-                        print('\n***ERROR***\nVPN hub default route must BE True or False')
-                        v[x] = 'NOT TRUE/FALSE'
-                        originalmap[idx][x] = 'NOT TRUE/FALSE'
-                        hasinvalidin = True
-                else:
-                    try:
-                        v[x] = next(item for item in hubs if item['name'] == v[x])['id']
-                    except StopIteration:
-                        print('\n***ERROR***\n"{0}" is not a valid VPN Hub Network - See output file for details'
-                              .format(str(v[x])))
-                        v[x] = 'INVALID HUB'
-                        originalmap[idx][x] = 'INVALID HUB'
-                        hasinvalidin = True
-                x += 1
-
-    for idx, n in enumerate(vpnnetmap):
-        if ('INVALID HUB' in n) or ('NOT TRUE/FALSE' in n) or ('INVALID NAME' in  n):
-            pass
-        else:
-            newhubs = []
-            oldvpn = merakiapi.getvpnsettings(apikey,n[0],suppressprint=True)
-            for h, d in zip(n[1::2], n[2::2]):
-                newhubs.append({'useDefaultRoute': bool(d), 'hubId': h})
-            newvpn = copy.deepcopy(oldvpn)
-            newvpn['hubs'] = newhubs
-
-            headers = {
-                'x-cisco-meraki-api-key': format(str(apikey)),
-                'Content-Type': 'application/json'
-            }
-
-            putdata = json.dumps(newvpn)
-            puturl = '{0}/networks/{1}/siteToSiteVpn'.format(str(base_url), str(n[0]))
-            dashboard = requests.put(puturl, data=putdata, headers=headers)
-            if dashboard.status_code == 200:
-                print('\nUpdating Network - "{0}"'.format(str(originalmap[idx][0])))
-                print('Network:\n{0}\nOld Data:\n{1}\nNew Data:\n{2}'.format(str(originalmap[idx][0]), str(oldvpn),
-                                                                             str(newvpn)), file=out)
-            else:
-                print('Network:\n{0}\nAPI Call Failed\n{1}'.format(str(originalmap[idx][0]), str(dashboard.text)),
-                      file=out)
-    if hasinvalidin == True:
-        print('\n****ERRORS FOUND IN INPUT FILE****\nInvalid Entries in input CSV, see {0} for details'
-              .format(str(errorcsv)))
-        with open(errorcsv, 'w+', newline='') as f:
-            writer = csv.writer(f)
-            writer.writerows(originalmap)
-        f.close()
+        filein.close()
+        fileout.close()
+        backup.close()
 
 if __name__ == "__main__":
     main(sys.argv[1:])
