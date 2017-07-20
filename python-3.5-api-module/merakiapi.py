@@ -1156,6 +1156,23 @@ def getdevicedetail(apikey, networkid, serialnumber, suppressprint=False):
     return result
 
 
+def getdeviceuplink(apikey, networkid, serialnumber, suppressprint=False):
+
+    calltype = 'Device Uplink'
+    geturl = '{0}/networks/{1}/devices/{2}/uplink'.format(str(base_url), str(networkid), str(serialnumber))
+    headers = {
+        'x-cisco-meraki-api-key': format(str(apikey)),
+        'Content-Type': 'application/json'
+    }
+
+    dashboard = requests.get(geturl, headers=headers)
+    #
+    # Call return handler function to parse Dashboard response
+    #
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
+    return result
+    
+
 def getnetworkdetail(apikey, networkid, suppressprint=False):
 
     calltype = 'Network Detail'
