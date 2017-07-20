@@ -614,30 +614,39 @@ base_url = 'https://dashboard.meraki.com/api/v0'
 
 
 class Error(Exception):
-    #
-    # Base module exception.
-    #
+    """
+
+    Base module exception
+
+    """
     pass
 
 
 class ListLengthWarn(Warning):
-    #
-    # Thrown when zip list lengths mismatch
-    #
+    """
+
+    Thrown when list lengths do not match
+
+    """
     pass
 
 
 class IgnoredArgument(Warning):
-    #
-    # Thrown when argument will be ignored
-    #
+    """
+
+    Thrown when argument will be ignored
+
+    """
     pass
 
 
 class OrgPermissionError(Error):
-    #
-    # Thrown when supplied API Key does not have access to supplied Organization ID
-    #
+    """
+
+    Thrown when supplied API Key does not have access to supplied Organization ID
+
+    """
+
     def __init__(self):
         self.default = 'Invalid Organization ID - Current API Key does not have access to this Organization'
 
@@ -646,9 +655,12 @@ class OrgPermissionError(Error):
 
 
 class EmailFormatError(Error):
-    #
-    # #Thrown when incorrect email format has been entered
-    #
+    """
+
+    Thrown when incorrect email format has been entered
+
+    """
+
     def __init__(self):
         self.default = 'Incorrect E-mail Address Format Entered - Must be in the format name@domain.dom'
 
@@ -657,32 +669,40 @@ class EmailFormatError(Error):
 
 
 class ListError(Error):
-    #
-    # Raised when empty list is passed when required
-    #
+    """
+
+    Raised when empty list is passed when required
+
+    """
     def __init__(self, message):
         self.message = message
 
 
 class DashboardObject(object):
-    #
-    # Base Dashboard object
-    #
+    """
+
+    Base Dashboard object
+
+    """
     pass
 
 
 class SSID(DashboardObject):
+    """
 
-    #  SSID Object Class
-    #  Refer to https://dashboard.meraki.com/manage/support/api_docs#ssids for details on accepted parameters
-    #
-    #  Provides a simplified object for downloading and manipulating SSID Attributes from Dashboard
+    SSID Object Class
+    Refer to https://dashboard.meraki.com/manage/support/api_docs#ssids for details on accepted parameters
 
+    Provides a simplified object for downloading and manipulating SSID Attributes from Dashboard
+
+    """
     validparams = ['name', 'enabled', 'authMode', 'encryptionMode', 'psk', 'radiusServers', 'radiusAccountingEnabled',
-                   'radiusAccountingServers', 'ipAssignmentMode', 'useVlanTagging', 'concentratorNetworkId', 'vlanID',
+                   'radiusAccountingServers', 'ipAssignmentMode', 'useVlanTagging', 'concentratorNetworkId', 'vlanId',
                    'defaultVlanId', 'apTagsAndVlanIds', 'walledGardenEnabled', 'walledGardenRanges', 'splashPage',
-                   'perClientBandwidthLimitUp', 'perClientBandwidthLimitDown']
+                   'perClientBandwidthLimitUp', 'perClientBandwidthLimitDown', 'bandSelection', 'minBitRate',
+                   'radiusCoaEnabled']
     type = 'ssid'
+
 
     def __init__(self, ssidnum, **params):
 
@@ -692,15 +712,19 @@ class SSID(DashboardObject):
             if p in self.validparams:
                 self.__setattr__(p, params[p])
             else:
-                raise ValueError('Invalid parameter {0}, please refer to https://dashboard.meraki.com/manage/support/'
-                                 'api_docs#ssids for valid parameters'.format(str(p)))
-
+                raise ValueError('Invalid parameter {0}, please refer to https://dashboard.meraki.com/api_docs#ssids '
+                                 'for valid parameters'.format(str(p)))
 
 
 def __isjson(myjson):
-    #
-    # Validates if passed object is valid JSON, used to prevent json.loads exceptions
-    #
+    """
+
+    Args:
+        myjson: String variable to be validated if it is JSON
+
+    Returns: None
+
+    """
     try:
         json_object = json.loads(myjson)
     except ValueError:
@@ -709,9 +733,14 @@ def __isjson(myjson):
 
 
 def __isvalidtz(tz):
-    #
-    # Validates if TZ exists in accepted TZ list
-    #
+    """
+
+    Args:
+        tz: String value containing timezone to be validated against TZ format
+
+    Returns: None
+
+    """
     validtz = False
 
     for zone in tzlist:
@@ -729,10 +758,14 @@ def __isvalidtz(tz):
 
 
 def __comparelist(*args):
-    #
-    # Compare length of multiple list arguments passed to function and exception if any are none and warn if any are
-    # different in length the first list passed
-    #
+    """
+
+    Args:
+        *args: Multiple list type variables can be passed to be compared for length
+
+    Returns: 2 when lists are different lengths, 0 when list lengths are equal
+
+    """
     length = len(args[0])
     if any(lst is None for lst in args):
         raise ListError('Empty list passed to function')
@@ -744,9 +777,15 @@ def __comparelist(*args):
 
 
 def __hasorgaccess(apikey, targetorg):
-    #
-    # Validate if API Key has access to passed Organization ID
-    #
+    """
+
+    Args:
+        apikey: Meraki API Key to test access to the organization
+        targetorg: Target organization to test access to for provided API Key
+
+    Returns: None, raises OrgPermissionError if API Key does not have access to the specified Meraki Organization
+
+    """
     geturl = '{0}/organizations'.format(str(base_url))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
@@ -769,17 +808,29 @@ def __hasorgaccess(apikey, targetorg):
 
 
 def __validemail(emailaddress):
-    #
-    # Validate email address format
-    #
+
+    """
+
+    Args:
+        emailaddress: Email address in string format to be validated
+
+    Returns: None, raises EmailFormatError exception if email is incorrectly formatted
+
+    """
+
     if not re.match(r"[^@]+@[^@]+\.[^@]+", emailaddress):
         raise EmailFormatError
 
 
 def __validip(ip):
-    #
-    # Validate IP format
-    #
+    """
+
+    Args:
+        ip: IP Address to be tested
+
+    Returns: None, raises ValueError on invalid formating for IP address
+
+    """
     try:
         ip_address(ip)
     except ValueError:
@@ -787,9 +838,14 @@ def __validip(ip):
 
 
 def __validsubnetip(subnetip):
-    #
-    # Validate correct subnet entry
-    #
+    """
+
+    Args:
+        subnetip: Subnet IP address to be tested
+
+    Returns: None, raises ValueError if provided subnet address has an invalid IP or incorrect CIDR mask length
+
+    """
     if not re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}[/]\d{1,2}$", subnetip):
         raise ValueError('Invalid Subnet IP Address {0} - Address must be formatted as #.#.#.#/#'.format(str(subnetip)))
     else:
@@ -804,9 +860,14 @@ def __validsubnetip(subnetip):
 
 
 def __listtotag(taglist):
-    #
-    # Converts list variable to space separated string for API pass to Dashboard
-    #
+    """
+
+    Args:
+        taglist: Space separated list of tags in a single string
+
+    Returns: List type variable containing all tags
+
+    """
 
     liststr = '  '
 
@@ -820,9 +881,19 @@ def __listtotag(taglist):
 
 
 def __returnhandler(statuscode, returntext, objtype, suppressprint):
-    #
-    # Parses Dashboard return information and returns error data based on status code and error JSON
-    #
+    """
+
+    Args:
+        statuscode: HTTP Status Code
+        returntext: JSON String
+        objtype: Type of object that operation was performed on (i.e. SSID, Network, Org, etc)
+        suppressprint: Suppress any print output when function is called
+
+    Returns:
+        errmsg: If returntext JSON contains {'errors'} element
+        returntext: If no error element, returns returntext
+
+    """
 
     validreturn = __isjson(returntext)
     noerr = False
@@ -901,9 +972,15 @@ def __returnhandler(statuscode, returntext, objtype, suppressprint):
 
 
 def myorgaccess(apikey, suppressprint=False):
-    #
-    # Query Dashboard for OrgID's that API key has access to
-    #
+    """
+
+    Args:
+        apikey: User's Meraki API Key
+        suppressprint: Suppress any print output from function (Default: False)
+
+    Returns: JSON formatted string of all organizations that provided API Key has access to
+
+    """
     calltype = 'Organization'
     geturl = '{0}/organizations'.format(str(base_url))
     headers = {
@@ -919,6 +996,16 @@ def myorgaccess(apikey, suppressprint=False):
 
 
 def getorg(apikey, orgid, suppressprint=False):
+    """
+
+    Args:
+        apikey: User's Meraki API Key
+        orgid: OrganizationId for operation to be performed against
+        suppressprint: Suppress any print output from function (Default: False)
+
+    Returns: JSON formatted string of organization details
+
+    """
     calltype = 'Organization'
     geturl = '{0}/organizations/{1}'.format(str(base_url), str(orgid))
     headers = {
@@ -934,12 +1021,16 @@ def getorg(apikey, orgid, suppressprint=False):
 
 
 def getorginventory(apikey, orgid, suppressprint=False):
-    #
-    # Pull organization inventory and return decoded JSON string
-    #
-    #
-    # Confirm API Key has Admin Access Otherwise Raise Error
-    #
+    """
+
+    Args:
+        apikey: User's Meraki API Key
+        orgid: OrganizationId for operation to be performed against
+        suppressprint: Suppress any print output from function (Default: False)
+
+    Returns: JSON formatted string of organization inventory
+
+    """
     __hasorgaccess(apikey, orgid)
     calltype = 'Inventory'
 
@@ -957,9 +1048,16 @@ def getorginventory(apikey, orgid, suppressprint=False):
 
 
 def getnetworkdevices(apikey, networkid, suppressprint=False):
-    #
-    # Get network inventory and return as decoded JSON string
-    #
+    """
+
+    Args:
+        apikey: User's Meraki API Key
+        networkid: ID field of target network to list devices from
+        suppressprint:
+
+    Returns:
+
+    """
     calltype = 'Network'
     geturl = '{0}/networks/{1}/devices'.format(str(base_url), str(networkid))
     headers = {
@@ -975,12 +1073,16 @@ def getnetworkdevices(apikey, networkid, suppressprint=False):
 
 
 def getorgadmins(apikey, orgid, suppressprint=False):
-    #
-    # Get administrators for organization and return decoded JSON string
-    #
-    #
-    # Confirm API Key has Admin Access Otherwise Raise Error
-    #
+    """
+
+    Args:
+        apikey: User's Meraki API Key
+        orgid: OrganizationId for operation to be performed against
+        suppressprint:
+
+    Returns:
+
+    """
     __hasorgaccess(apikey, orgid)
     calltype = 'Organization'
 
@@ -1330,7 +1432,7 @@ def bindtotemplate(apikey, networkid, templateid, autobind=False, suppressprint=
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
     }
-
+    
     postdata['configTemplateId'] = format(str(templateid))
     postdata['autoBind'] = autobind
 
@@ -1640,9 +1742,12 @@ def deladmin(apikey, orgid, adminid, suppressprint=False):
 
 
 def addnetwork(apikey, orgid, name, nettype, tags, tz, suppressprint=False):
-    #
-    # Confirm API Key has Admin Access Otherwise Raise Error
-    #
+    """
+    Action:     Adds new network to Meraki Dashboard with passed parameters
+    Call to:    https://dashboard.meraki.com/api/v0
+    Input: User API Key, Target Organization, New Network Parameters
+    Otput: JSON string returned from Dashboard API Call
+    """
     __hasorgaccess(apikey, orgid)
     calltype = 'Network'
 
@@ -1653,7 +1758,6 @@ def addnetwork(apikey, orgid, name, nettype, tags, tz, suppressprint=False):
     }
 
     __isvalidtz(tz)
-
     postdata = {
         'name': format(str(name)),
         'type': format(str(nettype)),
@@ -1662,9 +1766,6 @@ def addnetwork(apikey, orgid, name, nettype, tags, tz, suppressprint=False):
     }
     postdata = json.dumps(postdata)
     dashboard = requests.post(posturl, data=postdata, headers=headers)
-    #
-    # Call return handler function to parse Dashboard response
-    #
     result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
 
@@ -2273,52 +2374,52 @@ def updateswitchport(apikey, serialnum, portnum, name, tags, enabled, porttype, 
 
     putdata = {}
 
-    if name:
+    if name in locals():
         putdata['name'] = str(name)
 
-    if tags:
+    if tags in locals():
         putdata['tags'] = __listtotag(tags)
 
-    if enabled and (enabled is not False or not True):
+    if enabled in locals() and not isinstance(enabled, bool):
         raise ValueError("Enabled must be a boolean variable")
-    elif enabled:
+    elif enabled in locals():
         putdata['enabled'] = str(enabled)
 
-    if porttype and porttype not in ['access', 'trunk']:
+    if porttype in locals() and porttype not in ['access', 'trunk']:
         raise ValueError("Type must be either 'access' or 'trunk'")
-    elif porttype:
+    elif porttype in locals():
         putdata['type'] = str(porttype)
 
-    if vlan:
+    if vlan in locals():
         putdata['vlan'] = str(vlan)
 
-    if voicevlan:
+    if voicevlan in locals():
         putdata['voiceVlan'] = voicevlan
 
-    if allowedvlans:
+    if allowedvlans in locals():
         putdata['allowedVlans'] = allowedvlans
 
-    if poe and (poe is not False or not True):
+    if poe in locals and not isinstance(poe, bool):
         raise ValueError("PoE enabled must be a boolean variable")
-    elif poe:
+    elif poe in locals():
         putdata['poeEnabled'] = str(poe)
 
-    if isolation and (isolation is not False or not True):
+    if isolation in locals() and not isinstance(isolation, bool):
         raise ValueError("Port isolation enabled must be a bolean variable")
-    elif isolation:
+    elif isolation in locals():
         putdata['isolation'] = isolation
 
-    if rstp and (rstp is not False or not True):
+    if rstp in locals() and not isinstance(rstp,bool):
         raise ValueError("RSTP enabled must be a boolean variable")
-    elif rstp:
+    elif rstp in locals():
         putdata['rstpEnabled'] = rstp
 
-    if stpguard and stpguard not in ['disabled', 'root guard', 'BPDU guard']:
+    if stpguard in locals() and stpguard not in ['disabled', 'root guard', 'BPDU guard']:
         raise ValueError("Valid values for STP Guard are 'disabled', 'root guard',  or 'BPDU Guard'")
-    elif stpguard:
+    elif stpguard in locals():
         putdata['stpGuard'] = stpguard
 
-    if accesspolicynum:
+    if accesspolicynum in locals():
         putdata['accessPolicyNumber'] = accesspolicynum
 
     dashboard = requests.put(puturl, data=json.dumps(putdata), headers=headers)
@@ -2400,7 +2501,7 @@ def addsamlrole(apikey, orgid, rolename, orgaccess, tags, tagaccess, networks, n
 
     postdata = {}
 
-    if not rolename:
+    if not rolename in locals():
         raise ValueError("Role name must be passed for role creation")
     else:
         postdata['role'] = str(rolename)
@@ -2510,4 +2611,35 @@ def updatesamlrole(apikey, orgid, roleid, rolename, orgaccess, tags, tagaccess, 
     # Call return handler function to parse Dashboard response
     #
     result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
+    return result
+
+
+def updatessidobject(apikey, networkid, newssid: SSID, suppressprint=False):
+    '''
+
+    Args:
+        apikey: User's Meraki API Key
+        orgid: OrganizationId for operation to be performed against
+        newssid: SSID object with new SSID attributes
+        suppressprint: Suppress any print output from function (Default: False)
+
+    Returns:
+        result: Error message or details of newly created SSID
+
+    '''
+    # puturl = '{0}/networks/{1}/ssids/{2}'.format(str(base_url), str(networkid), newelement.ssidnum)
+    headers = {
+        'x-cisco-meraki-api-key': format(str(apikey)),
+        'Content-Type': 'application/json'
+    }
+    if newssid.type == 'ssid':
+        puturl = '{0}/networks/{1}/ssids/{2}'.format(str(base_url), str(networkid), newssid.ssidnum)
+
+    putdata = json.dumps(newssid.__dict__)
+#    print(putdata)
+    dashboard = requests.put(puturl, data=putdata, headers=headers)
+    #
+    # Call return handler function to parse Dashboard response
+    #
+    result = __returnhandler(dashboard.status_code, dashboard.text, str(newssid.type).upper(), suppressprint)
     return result
