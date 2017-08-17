@@ -8,6 +8,11 @@ This repository contains a number of modules and code samples for leveraging
 the Cisco Meraki Provisioning API.  Details for each of the folders are
 below.
 
+## meraki.py
+
+Python 3.6 module updated with all Dashboard API calls as of 2017-08-13.
+Also available on the Python [Package Index](https://pypi.python.org/pypi/meraki/) to be installed via pip.
+
 ## python-2.7
 
 A number of sample scripts built using Python 2.7 that perform common
