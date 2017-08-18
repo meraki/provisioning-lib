@@ -1914,15 +1914,15 @@ def cloneorg(apikey, orgid, neworgname, suppressprint=False):
 # https://dashboard.meraki.com/api_docs#claim-a-device-license-key-or-order-into-an-organization
 def claim(apikey, orgid, serial=None, licensekey=None, licensemode=None, orderid=None, suppressprint=False):
     calltype = 'Claim'
-    posturl = '{0}/organization/{1}/claim'.format(str(base_url), str(orgid))
+    posturl = '{0}/organizations/{1}/claim'.format(str(base_url), str(orgid))
     headers = {
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
     }
     x = 0
     postdata = {}
-    for x in [serial, licensekey, orderid]:
-        if x is None:
+    for y in [serial, licensekey, orderid]:
+        if y is None:
             pass
         else:
             x += 1
@@ -1930,8 +1930,7 @@ def claim(apikey, orgid, serial=None, licensekey=None, licensemode=None, orderid
         raise AttributeError('Mutiple identifiers passed, please pass only one of either serial number, license key, '
                              'or order ID')
     if (licensekey is None and licensemode is not None) or (licensemode is None and licensekey is not None):
-        raise AttributeError('If claiming a license key both license and licensemode attributes must be passed')
-
+        raise AttributeError('if claiming a license key both license and licensemode attributes must be passed')
     if serial is not None:
         postdata['serial'] = serial
     elif licensekey is not None and licensemode is not None:
@@ -1939,7 +1938,6 @@ def claim(apikey, orgid, serial=None, licensekey=None, licensemode=None, orderid
         postdata['licenseMode'] = serial
     elif orderid is not None:
         postdata['orderId'] = orderid
-
     dashboard = requests.post(posturl, data=json.dumps(postdata), headers=headers)
     #
     # Call return handler function to parse Dashboard response
@@ -3330,5 +3328,19 @@ def delvlan(apikey, networkid, vlanid, suppressprint=False):
     #
     # Call return handler function to parse Dashboard response
     #
+    result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
+    return result
+
+
+
+# MX performance score
+def getmxperf(apikey, networkid, serial, suppressprint=False):
+    calltype = 'MX Performance Detail'
+    geturl = '{0}/networks/{1}/devices/{2}/performance'.format(str(base_url), str(networkid), str(serial))
+    headers = {
+        'x-cisco-meraki-api-key': format(str(apikey)),
+        'Content-Type': 'application/json'
+    }
+    dashboard = requests.get(geturl, headers=headers)
     result = __returnhandler(dashboard.status_code, dashboard.text, calltype, suppressprint)
     return result
