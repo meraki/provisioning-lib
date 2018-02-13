@@ -974,12 +974,11 @@ def __returnhandler(statuscode, returntext, objtype, suppressprint):
         print('HTTP Status Code: {0} - No returned data\n'.format(str(statuscode)))
 
 
-
 ### ADMINS ###
 
 # List the dashboard administrators in this organization
 # https://dashboard.meraki.com/api_docs#list-the-dashboard-administrators-in-this-organization
-def getorgadmins(apikey, orgid, suppressprint=False):
+def getorgadmins(apikey, orgid, suppressprint=False, proxies=None, session=None):
     """
 
     Args:
@@ -998,7 +997,10 @@ def getorgadmins(apikey, orgid, suppressprint=False):
         'x-cisco-meraki-api-key': format(str(apikey)),
         'Content-Type': 'application/json'
     }
-    dashboard = requests.get(geturl, headers=headers)
+    if session:
+        dashboard = session.get(geturl, headers=headers, proxies=proxies)
+    else:
+        dashboard = requests.get(geturl, headers=headers, proxies=proxies)
     #
     # Call return handler function to parse Dashboard response
     #
