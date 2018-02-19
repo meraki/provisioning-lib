@@ -779,7 +779,7 @@ def __comparelist(*args):
         return 0
 
 
-def __hasorgaccess(apikey, targetorg):
+def __hasorgaccess(apikey, targetorg, proxies=None):
     """
 
     Args:
@@ -795,7 +795,7 @@ def __hasorgaccess(apikey, targetorg):
         'Content-Type': 'application/json'
     }
 
-    dashboard = requests.get(geturl, headers=headers)
+    dashboard = requests.get(geturl, headers=headers, proxies=proxies)
     currentorgs = json.loads(dashboard.text)
     orgs = []
     validjson = __isjson(dashboard.text)
@@ -990,7 +990,7 @@ def getorgadmins(apikey, orgid, suppressprint=False, proxies=None, session=None,
 
     """
     if verify_access:
-        __hasorgaccess(apikey, orgid)
+        __hasorgaccess(apikey, orgid, proxies=proxies)
     calltype = 'Organization'
 
     geturl = '{0}/organizations/{1}/admins'.format(str(base_url), str(orgid))
@@ -1017,7 +1017,7 @@ def addadmin(apikey, orgid, email, name, orgaccess=None, tags=None, tagaccess=No
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
     if verify_access:
-        __hasorgaccess(apikey, orgid)
+        __hasorgaccess(apikey, orgid, proxies=proxies)
     calltype = 'Administrator'
 
     posturl = '{0}/organizations/{1}/admins'.format(str(base_url), str(orgid))
@@ -1131,7 +1131,7 @@ def updateadmin(apikey, orgid, adminid, email, name=None, orgaccess=None, tags=N
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
     if verify_access:
-        __hasorgaccess(apikey, orgid)
+        __hasorgaccess(apikey, orgid, proxies=proxies)
     calltype = 'Administrator'
 
     puturl = '{0}/organizations/{1}/admins/{2}'.format(str(base_url), str(orgid), str(adminid))
@@ -1270,7 +1270,7 @@ def deladmin(apikey, orgid, adminid, suppressprint=False, proxies=None, session=
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
     if verify_access:
-        __hasorgaccess(apikey, orgid)
+        __hasorgaccess(apikey, orgid, proxies=proxies)
     calltype = 'Administrator'
 
     delurl = '{0}/organizations/{1}/admins/{2}'.format(str(base_url), str(orgid), str(adminid))
@@ -1320,7 +1320,7 @@ def gettemplates(apikey, orgid, suppressprint=False, proxies=None, session=None,
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
     if verify_access:
-        __hasorgaccess(apikey, orgid)
+        __hasorgaccess(apikey, orgid, proxies=proxies)
     calltype = 'Templates'
 
     geturl = '{0}/organizations/{1}/configTemplates'.format(str(base_url), str(orgid))
@@ -1346,7 +1346,7 @@ def deltemplate(apikey, orgid, templateid, suppressprint=False, proxies=None, se
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
     if verify_access:
-        __hasorgaccess(apikey, orgid)
+        __hasorgaccess(apikey, orgid, proxies=proxies)
     calltype = 'Template'
 
     delurl = '{0}/organizations/{1}/configTemplates/{2}'.format(str(base_url), str(orgid), str(templateid))
@@ -1613,7 +1613,7 @@ def getnetworklist(apikey, orgid, templateid=None, suppressprint=False, proxies=
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
     if verify_access:
-        __hasorgaccess(apikey, orgid)
+        __hasorgaccess(apikey, orgid, proxies=proxies)
     calltype = 'Network'
 
     geturl = '{0}/organizations/{1}/networks'.format(str(base_url), str(orgid))
@@ -1701,7 +1701,7 @@ def addnetwork(apikey, orgid, name, nettype, tags, tz, suppressprint=False, prox
     Otput: JSON string returned from Dashboard API Call
     """
     if verify_access:
-        __hasorgaccess(apikey, orgid)
+        __hasorgaccess(apikey, orgid, proxies=proxies)
     calltype = 'Network'
 
     posturl = '{0}/organizations/{1}/networks'.format(str(base_url), str(orgid))
@@ -1989,7 +1989,7 @@ def getorg(apikey, orgid, suppressprint=False, proxies=None, session=None):
 # Update an organization
 # https://dashboard.meraki.com/api_docs#update-an-organization
 def renameorg(apikey, orgid, neworgname, suppressprint=False, proxies=None, session=None, verify_access=True):
-    __hasorgaccess(apikey, orgid)
+    __hasorgaccess(apikey, orgid, proxies=proxies)
     calltype = 'Organization Rename'
     puturl = '{0}/organizations/{1}'.format(str(base_url), str(orgid))
     headers = {
@@ -2039,7 +2039,7 @@ def addorg(apikey, neworgname, suppressprint=False, proxies=None, session=None):
 # https://dashboard.meraki.com/api_docs#create-a-new-organization-by-cloning-the-addressed-organization
 def cloneorg(apikey, orgid, neworgname, suppressprint=False, proxies=None, session=None, verify_access=True):
     if verify_access:
-        __hasorgaccess(apikey, orgid)
+        __hasorgaccess(apikey, orgid, proxies=proxies)
     calltype = 'Organization Clone'
     posturl = '{0}/organizations/{1}/clone'.format(str(base_url), str(orgid))
     headers = {
@@ -2109,7 +2109,7 @@ def getlicensestate(apikey, orgid, suppressprint=False, proxies=None, session=No
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
     if verify_access:
-        __hasorgaccess(apikey, orgid)
+        __hasorgaccess(apikey, orgid, proxies=proxies)
     calltype = 'License'
 
     geturl = '{0}/organizations/{1}/licenseState'.format(str(base_url), str(orgid))
@@ -2143,7 +2143,7 @@ def getorginventory(apikey, orgid, suppressprint=False, proxies=None, session=No
 
     """
     if verify_access:
-        __hasorgaccess(apikey, orgid)
+        __hasorgaccess(apikey, orgid, proxies=proxies)
     calltype = 'Inventory'
 
     geturl = '{0}/organizations/{1}/inventory'.format(str(base_url), str(orgid))
@@ -2170,7 +2170,7 @@ def getsnmpsettings(apikey, orgid, suppressprint=False, proxies=None, session=No
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
     if verify_access:
-        __hasorgaccess(apikey, orgid)
+        __hasorgaccess(apikey, orgid, proxies=proxies)
     calltype = 'SNMP Settings'
 
     geturl = '{0}/organizations/{1}/snmp'.format(str(base_url), str(orgid))
@@ -2199,7 +2199,7 @@ def updatesnmpsettings(apikey, orgid, v2c=False, v3=False, v3authmode='SHA', v3a
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
     if verify_access:
-        __hasorgaccess(apikey, orgid)
+        __hasorgaccess(apikey, orgid, proxies=proxies)
     calltype = 'SNMP'
     puturl = '{0}/organizations/{1}/snmp'.format(str(base_url), str(orgid))
     headers = {
@@ -2261,7 +2261,7 @@ def getnonmerakivpnpeers(apikey, orgid, suppressprint=False, proxies=None, sessi
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
     if verify_access:
-        __hasorgaccess(apikey, orgid)
+        __hasorgaccess(apikey, orgid, proxies=proxies)
     calltype = 'Non-Meraki VPN'
 
     geturl = '{0}/organizations/{1}/thirdPartyVPNPeers'.format(str(base_url), str(orgid))
@@ -2295,7 +2295,7 @@ def updatenonmerakivpn(apikey, orgid, names, ips, secrets, remotenets, tags=None
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
     if verify_access:
-        __hasorgaccess(apikey, orgid)
+        __hasorgaccess(apikey, orgid, proxies=proxies)
     calltype = 'Non-Meraki VPN'
 
     puturl = '{0}/organizations/{1}/thirdPartyVPNPeers'.format(str(base_url), str(orgid))
@@ -2364,7 +2364,7 @@ def appendnonmerakivpn(apikey, orgid, names, ips, secrets, remotenets, tags=None
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
     if verify_access:
-        __hasorgaccess(apikey, orgid)
+        __hasorgaccess(apikey, orgid, proxies=proxies)
     calltype = 'Non-Meraki VPN'
 
     puturl = '{0}/organizations/{1}/thirdPartyVPNPeers'.format(str(base_url), str(orgid))
@@ -2643,7 +2643,7 @@ def getsamlroles(apikey, orgid, suppressprint=False, proxies=None, session=None,
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
     if verify_access:
-        __hasorgaccess(apikey, orgid)
+        __hasorgaccess(apikey, orgid, proxies=proxies)
     calltype = 'SAML Roles'
 
     geturl = '{0}/organizations/{1}/samlRoles'.format(str(base_url), str(orgid))
@@ -2670,7 +2670,7 @@ def getsamlroledetail(apikey, orgid, roleid, suppressprint=False, proxies=None, 
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
     if verify_access:
-        __hasorgaccess(apikey, orgid)
+        __hasorgaccess(apikey, orgid, proxies=proxies)
     calltype = 'SAML Role Detail'
 
     geturl = '{0}/organizations/{1}/samlRoles/{2}'.format(str(base_url), str(orgid), str(roleid))
@@ -2698,7 +2698,7 @@ def updatesamlrole(apikey, orgid, roleid, rolename, orgaccess, tags, tagaccess, 
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
     if verify_access:
-        __hasorgaccess(apikey, orgid)
+        __hasorgaccess(apikey, orgid, proxies=proxies)
     calltype = 'SAML Role'
 
     puturl = '{0}/organizations/{1}/samlRoles/{2}'.format(str(base_url), str(orgid), str(roleid))
@@ -2796,7 +2796,7 @@ def addsamlrole(apikey, orgid, rolename, orgaccess, tags, tagaccess, networks, n
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
     if verify_access:
-        __hasorgaccess(apikey, orgid)
+        __hasorgaccess(apikey, orgid, proxies=proxies)
     calltype = 'SAML Role'
 
     posturl = '{0}/organizations/{1}/samlRoles'.format(str(base_url), str(orgid))
@@ -2895,7 +2895,7 @@ def delsamlrole(apikey, orgid, roleid, suppressprint=False, proxies=None, sessio
     # Confirm API Key has Admin Access Otherwise Raise Error
     #
     if verify_access:
-        __hasorgaccess(apikey, orgid)
+        __hasorgaccess(apikey, orgid, proxies=proxies)
     calltype = 'SAML Role'
 
     delurl = '{0}/organizations/{1}/samlRoles/{2}'.format(str(base_url), str(orgid), str(roleid))
